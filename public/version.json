@@ -1,0 +1,6 @@
+{
+  "versionCode": 5,
+  "version": "1.5.0",
+  "apkUrl": "https://stashly-napoli-77201.web.app/stashly-latest.apk",
+  "changelog": "Aggiunto il controllo aggiornamenti in-app: da ora l'app ti avvisa da sola quando c'è una nuova versione, con un tasto per scaricarla e installarla senza passare da qui."
+}

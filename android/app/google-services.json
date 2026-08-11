@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "994717136402",
+    "project_id": "stashly-napoli-77201",
+    "storage_bucket": "stashly-napoli-77201.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:994717136402:android:28ac450f433c93e8b10acb",
+        "android_client_info": {
+          "package_name": "com.stashly.stashly"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBxwLAhPIIxx5XrMLAKjDokgVxrAxTzBiU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
