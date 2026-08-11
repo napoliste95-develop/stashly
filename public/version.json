@@ -1,6 +1,6 @@
 {
-  "versionCode": 6,
-  "version": "1.6.0",
-  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v1.6.0/stashly-v6.apk",
-  "changelog": "Impostazioni consolidate (aggiornamenti, versione, log errori tutti in un posto), nuovo form per segnalare bug o proporre funzionalità, e le categorie non condividono più mai lo stesso colore."
+  "versionCode": 7,
+  "version": "1.7.0",
+  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v1.7.0/stashly-v7.apk",
+  "changelog": "Aggiornamenti completamente in-app: l'APK viene scaricato dentro l'app (con barra di avanzamento) e l'installazione parte automaticamente, senza aprire il browser."
 }

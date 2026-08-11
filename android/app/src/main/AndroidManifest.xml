@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Necessario per installare direttamente l'APK scaricato in-app
+         durante il controllo aggiornamenti. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <application
         android:label="stashly"
         android:name="${applicationName}"
