@@ -8,6 +8,7 @@ import '../services/update_service.dart';
 import '../widgets/item_card.dart';
 import '../widgets/item_sheet_helper.dart';
 import '../widgets/update_dialog.dart';
+import '../widgets/welcome_dialog.dart';
 import 'account_screen.dart';
 import 'category_management_screen.dart';
 import 'settings_screen.dart';
@@ -27,7 +28,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     ShareIntentService.instance.init(_onSharedUrl);
-    _checkForUpdateSilently();
+    _runStartupChecks();
+  }
+
+  Future<void> _runStartupChecks() async {
+    await maybeShowWelcomeDialog(context);
+    await _checkForUpdateSilently();
   }
 
   Future<void> _checkForUpdateSilently() async {
