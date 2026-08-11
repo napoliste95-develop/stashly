@@ -10,9 +10,7 @@ import '../widgets/item_sheet_helper.dart';
 import '../widgets/update_dialog.dart';
 import 'account_screen.dart';
 import 'category_management_screen.dart';
-import 'error_log_screen.dart';
 import 'settings_screen.dart';
-import 'version_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -45,18 +43,6 @@ class _HomeScreenState extends State<HomeScreen> {
         duration: const Duration(seconds: 8),
       ),
     );
-  }
-
-  Future<void> _checkForUpdateManually() async {
-    final info = await UpdateService().checkForUpdate();
-    if (!mounted) return;
-    if (info == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hai già la versione più recente.')),
-      );
-    } else {
-      await showUpdateDialog(context, info);
-    }
   }
 
   @override
@@ -114,27 +100,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 context,
                 MaterialPageRoute(builder: (_) => const SettingsScreen()),
               ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.error_outline),
-              title: const Text('Log errori'),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ErrorLogScreen()),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.info_outline),
-              title: const Text('Versione'),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const VersionScreen()),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.system_update_outlined),
-              title: const Text('Controlla aggiornamenti'),
-              onTap: _checkForUpdateManually,
             ),
           ],
         ),

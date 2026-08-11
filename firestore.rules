@@ -5,5 +5,13 @@ service cloud.firestore {
     match /users/{userId}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+
+    // Segnalazioni di bug/proposte: chiunque autenticato può inviarne una,
+    // ma nessuno (a parte dalla console Firebase) può leggerle o modificarle.
+    match /feedback/{feedbackId} {
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if false;
+    }
   }
 }

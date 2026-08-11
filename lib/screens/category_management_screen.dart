@@ -48,7 +48,12 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     }
   }
 
-  Future<void> _changeColor(Category category) async {
+  Future<void> _changeColor(Category category, List<Category> allCategories) async {
+    final usedByOthers = allCategories
+        .where((c) => c.id != category.id)
+        .map((c) => c.color.toARGB32())
+        .toSet();
+
     final newColor = await showDialog<Color>(
       context: context,
       builder: (context) => AlertDialog(
@@ -58,16 +63,23 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
           runSpacing: 12,
           children: categoryColorPalette.map((color) {
             final selected = color.toARGB32() == category.color.toARGB32();
+            final takenByOther = usedByOthers.contains(color.toARGB32());
             return GestureDetector(
-              onTap: () => Navigator.pop(context, color),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                  border: selected
-                      ? Border.all(color: Colors.black, width: 3)
+              onTap: takenByOther ? null : () => Navigator.pop(context, color),
+              child: Opacity(
+                opacity: takenByOther ? 0.25 : 1,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: selected
+                        ? Border.all(color: Colors.black, width: 3)
+                        : null,
+                  ),
+                  child: takenByOther
+                      ? const Icon(Icons.lock, size: 16, color: Colors.white)
                       : null,
                 ),
               ),
@@ -140,7 +152,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                   final category = categories[index];
                   return ListTile(
                     leading: GestureDetector(
-                      onTap: () => _changeColor(category),
+                      onTap: () => _changeColor(category, categories),
                       child: CircleAvatar(
                         backgroundColor: category.color,
                         child: const Icon(

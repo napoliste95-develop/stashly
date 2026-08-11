@@ -17,6 +17,25 @@ class FirestoreService {
   CollectionReference<Map<String, dynamic>> get _categoriesRef =>
       _db.collection('users').doc(_uid).collection('categories');
 
+  // ---------------- Feedback ----------------
+
+  Future<void> submitFeedback({
+    required String type,
+    required String message,
+  }) async {
+    try {
+      await _db.collection('feedback').add({
+        'type': type,
+        'message': message.trim(),
+        'userId': _uid,
+        'createdAt': Timestamp.now(),
+      });
+    } catch (e) {
+      await ErrorLogService.instance.log('Errore invio segnalazione: $e');
+      rethrow;
+    }
+  }
+
   // ---------------- Items ----------------
 
   Stream<List<SavedItem>> watchItems() {
@@ -119,11 +138,9 @@ class FirestoreService {
         );
   }
 
-  Future<String> createCategory(String name, {Color? color}) async {
+  Future<String> createCategory(String name) async {
     try {
-      final chosenColor = color ??
-          categoryColorPalette[
-              DateTime.now().millisecondsSinceEpoch % categoryColorPalette.length];
+      final chosenColor = await _pickUnusedColor();
       final doc = await _categoriesRef.add({
         'name': name.trim(),
         'color': chosenColor.toARGB32(),
@@ -133,6 +150,18 @@ class FirestoreService {
       await ErrorLogService.instance.log('Errore creazione categoria: $e');
       rethrow;
     }
+  }
+
+  /// Sceglie un colore della tavolozza non ancora usato da nessuna
+  /// categoria esistente. Se sono tutti occupati, ne riusa uno (le
+  /// categorie in eccesso condivideranno un colore, ma è un caso raro).
+  Future<Color> _pickUnusedColor() async {
+    final existing = await _categoriesRef.get();
+    final usedColors = existing.docs.map((d) => d.data()['color'] as int).toSet();
+    return categoryColorPalette.firstWhere(
+      (c) => !usedColors.contains(c.toARGB32()),
+      orElse: () => categoryColorPalette[existing.docs.length % categoryColorPalette.length],
+    );
   }
 
   /// Restituisce l'id della categoria con questo nome, creandola se manca.
