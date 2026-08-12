@@ -13,6 +13,78 @@ import 'account_screen.dart';
 import 'category_management_screen.dart';
 import 'settings_screen.dart';
 
+enum SortOption { newest, oldest, nameAsc, nameDesc, platform }
+
+String sortOptionLabel(SortOption option) {
+  switch (option) {
+    case SortOption.newest:
+      return 'Più recenti';
+    case SortOption.oldest:
+      return 'Meno recenti';
+    case SortOption.nameAsc:
+      return 'Nome A-Z';
+    case SortOption.nameDesc:
+      return 'Nome Z-A';
+    case SortOption.platform:
+      return 'Piattaforma';
+  }
+}
+
+String _displayName(SavedItem item) =>
+    item.title.isNotEmpty ? item.title : item.url;
+
+/// Filtra per categoria e testo di ricerca, poi ordina secondo [sortOption].
+/// Funzione pura per poterla testare senza dover costruire un widget.
+List<SavedItem> filterAndSortItems(
+  List<SavedItem> items, {
+  String? categoryId,
+  String searchQuery = '',
+  SortOption sortOption = SortOption.newest,
+}) {
+  var result = categoryId == null
+      ? items
+      : items.where((e) => e.categoryIds.contains(categoryId)).toList();
+
+  final query = searchQuery.trim().toLowerCase();
+  if (query.isNotEmpty) {
+    result = result
+        .where((e) =>
+            e.title.toLowerCase().contains(query) ||
+            e.note.toLowerCase().contains(query) ||
+            e.url.toLowerCase().contains(query))
+        .toList();
+  }
+
+  result = List.of(result);
+  switch (sortOption) {
+    case SortOption.newest:
+      result.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      break;
+    case SortOption.oldest:
+      result.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      break;
+    case SortOption.nameAsc:
+      result.sort((a, b) => _displayName(a)
+          .toLowerCase()
+          .compareTo(_displayName(b).toLowerCase()));
+      break;
+    case SortOption.nameDesc:
+      result.sort((a, b) => _displayName(b)
+          .toLowerCase()
+          .compareTo(_displayName(a).toLowerCase()));
+      break;
+    case SortOption.platform:
+      result.sort((a, b) {
+        final byPlatform = a.platform.index.compareTo(b.platform.index);
+        return byPlatform != 0
+            ? byPlatform
+            : b.createdAt.compareTo(a.createdAt);
+      });
+      break;
+  }
+  return result;
+}
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -23,6 +95,10 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _service = FirestoreService();
   String? _selectedCategoryId;
+  bool _isSearching = false;
+  String _searchQuery = '';
+  final _searchController = TextEditingController();
+  SortOption _sortOption = SortOption.newest;
 
   @override
   void initState() {
@@ -54,7 +130,18 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     ShareIntentService.instance.dispose();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  void _toggleSearch() {
+    setState(() {
+      _isSearching = !_isSearching;
+      if (!_isSearching) {
+        _searchQuery = '';
+        _searchController.clear();
+      }
+    });
   }
 
   void _onSharedUrl(String url) {
@@ -116,7 +203,39 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Stashly')),
+      appBar: AppBar(
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'Cerca nei salvati...',
+                  border: InputBorder.none,
+                ),
+                onChanged: (v) => setState(() => _searchQuery = v),
+              )
+            : const Text('Stashly'),
+        actions: [
+          IconButton(
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            onPressed: _toggleSearch,
+          ),
+          PopupMenuButton<SortOption>(
+            icon: const Icon(Icons.sort),
+            tooltip: 'Ordina',
+            initialValue: _sortOption,
+            onSelected: (option) => setState(() => _sortOption = option),
+            itemBuilder: (context) => SortOption.values
+                .map(
+                  (option) => PopupMenuItem(
+                    value: option,
+                    child: Text(sortOptionLabel(option)),
+                  ),
+                )
+                .toList(),
+          ),
+        ],
+      ),
       drawer: _buildDrawer(),
       body: StreamBuilder<List<Category>>(
         stream: _service.watchCategories(),
@@ -145,11 +264,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               }
 
-              final filtered = _selectedCategoryId == null
-                  ? items
-                  : items
-                      .where((e) => e.categoryIds.contains(_selectedCategoryId))
-                      .toList();
+              final filtered = filterAndSortItems(
+                items,
+                categoryId: _selectedCategoryId,
+                searchQuery: _searchQuery,
+                sortOption: _sortOption,
+              );
 
               return Column(
                 children: [
@@ -188,13 +308,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const Divider(height: 1),
                   Expanded(
-                    child: ListView.builder(
-                      itemCount: filtered.length,
-                      itemBuilder: (context, index) => ItemCard(
-                        item: filtered[index],
-                        categoryById: categoryById,
-                      ),
-                    ),
+                    child: filtered.isEmpty
+                        ? const Center(
+                            child: Text('Nessun salvato corrisponde ai filtri.'),
+                          )
+                        : ListView.builder(
+                            itemCount: filtered.length,
+                            itemBuilder: (context, index) => ItemCard(
+                              item: filtered[index],
+                              categoryById: categoryById,
+                            ),
+                          ),
                   ),
                 ],
               );

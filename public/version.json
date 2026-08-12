@@ -1,6 +1,6 @@
 {
-  "versionCode": 9,
-  "version": "0.5.0",
-  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.5.0/stashly-v0.5.0.apk",
-  "changelog": "Fix importante: risolte le sessioni multiple duplicate che si aprivano nel multitasking. Nella gestione categorie: pulsante per crearne una nuova direttamente da lì, e contatore di quanti salvati contiene ogni categoria."
+  "versionCode": 10,
+  "version": "0.5.1",
+  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.5.1/stashly-v0.5.1.apk",
+  "changelog": "Aggiunta la ricerca testuale (cerca in nome, nota e link) e l'ordinamento (per data, nome o piattaforma) nella schermata principale, accessibili dalle icone nella barra in alto."
 }
