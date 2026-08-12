@@ -1,6 +1,6 @@
 {
-  "versionCode": 8,
-  "version": "0.8.0",
-  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.8.0/stashly-v0.8.0.apk",
-  "changelog": "Popup di benvenuto al primo avvio con spiegazione rapida dell'app (disattivabile con una spunta), e nuova numerazione versioni: da qui si riparte dalla serie 0.x, l'app è ancora in sviluppo attivo."
+  "versionCode": 9,
+  "version": "0.5.0",
+  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.5.0/stashly-v0.5.0.apk",
+  "changelog": "Fix importante: risolte le sessioni multiple duplicate che si aprivano nel multitasking. Nella gestione categorie: pulsante per crearne una nuova direttamente da lì, e contatore di quanti salvati contiene ogni categoria."
 }

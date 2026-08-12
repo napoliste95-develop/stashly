@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/category.dart';
+import '../models/saved_item.dart';
 import '../services/firestore_service.dart';
 
 class CategoryManagementScreen extends StatefulWidget {
@@ -14,6 +15,42 @@ class CategoryManagementScreen extends StatefulWidget {
 class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
   final _service = FirestoreService();
   bool _busy = false;
+
+  Future<void> _create() async {
+    final controller = TextEditingController();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Nuova categoria'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Nome',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annulla'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('Crea'),
+          ),
+        ],
+      ),
+    );
+    if (name == null || name.isEmpty) return;
+
+    setState(() => _busy = true);
+    try {
+      await _service.createCategory(name);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   Future<void> _rename(Category category) async {
     final controller = TextEditingController(text: category.name);
@@ -132,13 +169,22 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Gestisci categorie')),
+      appBar: AppBar(
+        title: const Text('Gestisci categorie'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            tooltip: 'Nuova categoria',
+            onPressed: _create,
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           StreamBuilder<List<Category>>(
             stream: _service.watchCategories(),
-            builder: (context, snapshot) {
-              final categories = snapshot.data ?? [];
+            builder: (context, categorySnapshot) {
+              final categories = categorySnapshot.data ?? [];
 
               if (categories.isEmpty) {
                 return const Center(
@@ -146,36 +192,49 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                 );
               }
 
-              return ListView.builder(
-                itemCount: categories.length,
-                itemBuilder: (context, index) {
-                  final category = categories[index];
-                  return ListTile(
-                    leading: GestureDetector(
-                      onTap: () => _changeColor(category, categories),
-                      child: CircleAvatar(
-                        backgroundColor: category.color,
-                        child: const Icon(
-                          Icons.bookmark,
-                          color: Colors.white,
-                          size: 18,
+              return StreamBuilder<List<SavedItem>>(
+                stream: _service.watchItems(),
+                builder: (context, itemsSnapshot) {
+                  final items = itemsSnapshot.data ?? [];
+
+                  return ListView.builder(
+                    itemCount: categories.length,
+                    itemBuilder: (context, index) {
+                      final category = categories[index];
+                      final count = items
+                          .where((i) => i.categoryIds.contains(category.id))
+                          .length;
+                      return ListTile(
+                        leading: GestureDetector(
+                          onTap: () => _changeColor(category, categories),
+                          child: CircleAvatar(
+                            backgroundColor: category.color,
+                            child: const Icon(
+                              Icons.bookmark,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    title: Text(category.name),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit_outlined),
-                          onPressed: () => _rename(category),
+                        title: Text(category.name),
+                        subtitle: Text(
+                          count == 1 ? '1 salvato' : '$count salvati',
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline),
-                          onPressed: () => _delete(category),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined),
+                              onPressed: () => _rename(category),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              onPressed: () => _delete(category),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   );
                 },
               );
