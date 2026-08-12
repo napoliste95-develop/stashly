@@ -7,30 +7,58 @@ import 'package:path_provider/path_provider.dart';
 import 'error_log_service.dart';
 
 class ApkInstallerService {
+  static const _maxAttempts = 3;
+
   /// Scarica l'APK dall'url indicato in una cartella temporanea,
   /// riportando l'avanzamento (0.0 - 1.0) tramite [onProgress].
+  /// Riprova automaticamente in caso di problemi di rete transitori
+  /// (es. connessioni interrotte a metà, comuni su rete mobile).
   Future<File> download(String url, void Function(double progress) onProgress) async {
-    final request = http.Request('GET', Uri.parse(url));
-    final response = await http.Client().send(request);
+    Object? lastError;
+    for (var attempt = 1; attempt <= _maxAttempts; attempt++) {
+      final client = http.Client();
+      try {
+        onProgress(0);
+        final request = http.Request('GET', Uri.parse(url))
+          ..followRedirects = true
+          ..headers['User-Agent'] = 'Stashly-App'
+          ..headers['Connection'] = 'close';
+        final response = await client.send(request);
 
-    if (response.statusCode != 200) {
-      throw Exception('Download fallito (HTTP ${response.statusCode})');
+        if (response.statusCode != 200) {
+          throw Exception('Download fallito (HTTP ${response.statusCode})');
+        }
+
+        final total = response.contentLength ?? 0;
+        final dir = await getTemporaryDirectory();
+        final file = File('${dir.path}/stashly-update.apk');
+        final sink = file.openWrite();
+
+        var received = 0;
+        try {
+          await response.stream.listen((chunk) {
+            sink.add(chunk);
+            received += chunk.length;
+            if (total > 0) onProgress(received / total);
+          }).asFuture<void>();
+        } finally {
+          await sink.close();
+        }
+
+        return file;
+      } catch (e) {
+        lastError = e;
+        await ErrorLogService.instance.log(
+          'Tentativo $attempt/$_maxAttempts di download aggiornamento fallito: $e',
+        );
+        if (attempt < _maxAttempts) {
+          await Future.delayed(Duration(seconds: attempt * 2));
+        }
+      } finally {
+        client.close();
+      }
     }
-
-    final total = response.contentLength ?? 0;
-    final dir = await getTemporaryDirectory();
-    final file = File('${dir.path}/stashly-update.apk');
-    final sink = file.openWrite();
-
-    var received = 0;
-    await response.stream.listen((chunk) {
-      sink.add(chunk);
-      received += chunk.length;
-      if (total > 0) onProgress(received / total);
-    }).asFuture<void>();
-    await sink.close();
-
-    return file;
+    throw Exception('Download non riuscito dopo $_maxAttempts tentativi: $lastError');
   }
 
   /// Avvia l'installer di sistema per il file scaricato. La prima volta

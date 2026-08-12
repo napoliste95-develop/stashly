@@ -121,6 +121,7 @@ firebase.json             # Config Hosting (public/) + Firestore rules/indexes
 19. **Gestione categorie**: aggiunto pulsante "+" nell'AppBar per creare una categoria direttamente da questa schermata (non solo dal foglio di aggiunta salvato), e contatore "N salvati" per ogni categoria (calcolato incrociando lo stream degli item con `categoryIds`)
 20. **Rinumerazione versione**: riportata a schema 0.5.0 su richiesta esplicita dell'utente (non un errore — vedi "Modi di operare concordati" sopra)
 21. **Ricerca e ordinamento nella home**: icona lente nell'AppBar che espande un campo di ricerca (filtra su nome/nota/link), icona ordina che apre un menu (più recenti, meno recenti, nome A-Z/Z-A, piattaforma). Logica pura estratta in `filterAndSortItems` (`lib/screens/home_screen.dart`) e coperta da test unitari in `test/home_filter_sort_test.dart`
+22. **Bug fix — download aggiornamento falliva su alcune reti** (`ClientException: Connection closed before full header was received`): `apk_installer_service.dart` ora riprova automaticamente fino a 3 volte con backoff, imposta header `User-Agent`/`Connection: close` e chiude sempre il client HTTP
 
 ## Come funziona il rilascio di una nuova versione
 
