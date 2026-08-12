@@ -1,6 +1,6 @@
 {
-  "versionCode": 11,
-  "version": "0.5.2",
-  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.5.2/stashly-v0.5.2.apk",
-  "changelog": "Fix: il download dell'aggiornamento in-app poteva fallire su alcune connessioni con l'errore \"Connection closed before full header was received\". Ora riprova automaticamente fino a 3 volte."
+  "versionCode": 12,
+  "version": "0.5.3",
+  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.5.3/stashly-v0.5.3.apk",
+  "changelog": "Nuova icona dell'app: una S rossa su sfondo nero, al posto dell'icona predefinita di Flutter."
 }
