@@ -1,6 +1,6 @@
 # Stashly
 
-App per non lasciare "a prendere polvere" i contenuti salvati sui social — Instagram, TikTok, Pinterest e in futuro altri — raccogliendoli in un unico posto, organizzati in categorie personalizzabili.
+App per non lasciare "a prendere polvere" i contenuti salvati sui social — Instagram, TikTok, Pinterest, YouTube, X, Facebook, Reddit, Threads, Twitch e in futuro altri — raccogliendoli in un unico posto, organizzati in categorie personalizzabili.
 
 Il problema che risolve: i "salvati" di Instagram, i preferiti di TikTok, le board di Pinterest restano isolati ognuno nella propria app, senza un modo semplice per cercarli, categorizzarli o ritrovarli a distanza di tempo. Stashly li raccoglie tutti in un unico posto che controlli tu.
 

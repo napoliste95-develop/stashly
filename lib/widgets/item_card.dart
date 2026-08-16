@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -7,16 +8,28 @@ import '../models/saved_item.dart';
 import '../services/firestore_service.dart';
 import 'item_sheet_helper.dart';
 
-String platformLetter(SocialPlatform platform) {
+FaIconData platformIcon(SocialPlatform platform) {
   switch (platform) {
     case SocialPlatform.instagram:
-      return 'I';
+      return FontAwesomeIcons.instagram;
     case SocialPlatform.tiktok:
-      return 'T';
+      return FontAwesomeIcons.tiktok;
     case SocialPlatform.pinterest:
-      return 'P';
+      return FontAwesomeIcons.pinterest;
+    case SocialPlatform.youtube:
+      return FontAwesomeIcons.youtube;
+    case SocialPlatform.x:
+      return FontAwesomeIcons.xTwitter;
+    case SocialPlatform.facebook:
+      return FontAwesomeIcons.facebook;
+    case SocialPlatform.reddit:
+      return FontAwesomeIcons.reddit;
+    case SocialPlatform.threads:
+      return FontAwesomeIcons.threads;
+    case SocialPlatform.twitch:
+      return FontAwesomeIcons.twitch;
     case SocialPlatform.other:
-      return '•';
+      return FontAwesomeIcons.link;
   }
 }
 
@@ -28,6 +41,18 @@ Color platformColor(SocialPlatform platform) {
       return const Color(0xFF010101);
     case SocialPlatform.pinterest:
       return const Color(0xFFE60023);
+    case SocialPlatform.youtube:
+      return const Color(0xFFFF0000);
+    case SocialPlatform.x:
+      return const Color(0xFF000000);
+    case SocialPlatform.facebook:
+      return const Color(0xFF1877F2);
+    case SocialPlatform.reddit:
+      return const Color(0xFFFF4500);
+    case SocialPlatform.threads:
+      return const Color(0xFF000000);
+    case SocialPlatform.twitch:
+      return const Color(0xFF9146FF);
     case SocialPlatform.other:
       return Colors.grey;
   }
@@ -51,12 +76,10 @@ class ItemCard extends StatelessWidget {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: platformColor(item.platform),
-          child: Text(
-            platformLetter(item.platform),
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
+          child: FaIcon(
+            platformIcon(item.platform),
+            color: Colors.white,
+            size: 18,
           ),
         ),
         title: Text(
