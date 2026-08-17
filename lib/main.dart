@@ -47,8 +47,19 @@ class StashlyApp extends StatelessWidget {
   }
 }
 
-class AuthGate extends StatelessWidget {
+class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  // Creato una sola volta (non ad ogni build): un Future nuovo ad ogni
+  // rebuild farebbe ripartire il FutureBuilder da "waiting", smontando
+  // HomeScreen (e con essa il listener delle condivisioni) ogni volta che
+  // StashlyApp si ricostruisce, es. al cambio tema.
+  late final Future<void> _signInFuture = _ensureSignedIn();
 
   Future<void> _ensureSignedIn() async {
     if (FirebaseAuth.instance.currentUser == null) {
@@ -60,7 +71,7 @@ class AuthGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: _ensureSignedIn(),
+      future: _signInFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Scaffold(

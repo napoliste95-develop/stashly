@@ -1,6 +1,6 @@
 {
-  "versionCode": 17,
-  "version": "0.6.3",
-  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.6.3/stashly-v0.6.3.apk",
-  "changelog": "Impostazioni riorganizzate: Aspetto e Promemoria in sottomenu dedicati. Rimossa la voce Log errori."
+  "versionCode": 18,
+  "version": "0.6.4",
+  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.6.4/stashly-v0.6.4.apk",
+  "changelog": "Risolto un bug per cui la finestra per salvare un nuovo contenuto condiviso da un'altra app a volte non si apriva."
 }
