@@ -12,7 +12,20 @@
           "package_name": "com.stashly.stashly"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "994717136402-ktj50jcmu2adfr5nilehbv68tlcu6g5l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.stashly.stashly",
+            "certificate_hash": "d021eeb2328023f1a746fb78e6b9f02f9c7e31aa"
+          }
+        },
+        {
+          "client_id": "994717136402-7pbvgof8lnc2evluoetpf2ce58b1b2mg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBxwLAhPIIxx5XrMLAKjDokgVxrAxTzBiU"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "994717136402-7pbvgof8lnc2evluoetpf2ce58b1b2mg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

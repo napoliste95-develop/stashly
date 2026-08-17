@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -21,6 +23,23 @@ class _AccountScreenState extends State<AccountScreen> {
     super.dispose();
   }
 
+  static final _emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
+  String? _authValidationError() {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    if (email.isEmpty || password.isEmpty) {
+      return 'Inserisci email e password.';
+    }
+    if (!_emailRegex.hasMatch(email)) {
+      return 'Inserisci un indirizzo email valido (es. nome@esempio.com).';
+    }
+    if (password.length < 6) {
+      return 'La password deve contenere almeno 6 caratteri.';
+    }
+    return null;
+  }
+
   Future<void> _run(Future<void> Function() action) async {
     setState(() {
       _loading = true;
@@ -29,12 +48,40 @@ class _AccountScreenState extends State<AccountScreen> {
     try {
       await action();
     } on FirebaseAuthException catch (e) {
-      setState(() => _error = e.message ?? e.code);
+      if (e.code == 'account-exists-with-different-credential') {
+        setState(() => _error =
+            'Esiste già un account con questa email, creato con password. '
+            'Accedi con email e password per collegarlo a Google in un '
+            'secondo momento.');
+      } else {
+        setState(() => _error = e.message ?? e.code);
+      }
     } catch (e) {
-      setState(() => _error = e.toString());
+      // Bug noto del plugin firebase_auth su Android: quando la vera
+      // eccezione non viene serializzata correttamente sul canale Pigeon,
+      // arriva solo il nome grezzo del canale invece del vero errore.
+      final raw = e.toString().toLowerCase();
+      if (raw.contains('pigeon') || raw.contains('channel-error')) {
+        setState(() => _error =
+            'Non è stato possibile completare l\'operazione a causa di un '
+            'problema di comunicazione con il servizio di accesso. Controlla '
+            'che email e password siano corretti — oppure che l\'account non '
+            'esista già, se stai creando un nuovo account — e riprova.');
+      } else {
+        setState(() => _error = e.toString());
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _runAuthAction(Future<void> Function() action) async {
+    final validationError = _authValidationError();
+    if (validationError != null) {
+      setState(() => _error = validationError);
+      return;
+    }
+    await _run(action);
   }
 
   Future<void> _register() async {
@@ -51,6 +98,26 @@ class _AccountScreenState extends State<AccountScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+    }
+    setState(() {});
+  }
+
+  Future<void> _loginWithGoogle() async {
+    final GoogleSignInAccount googleUser;
+    try {
+      googleUser = await GoogleSignIn.instance.authenticate();
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) return;
+      rethrow;
+    }
+    final googleAuth = googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(idToken: googleAuth.idToken);
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null && user.isAnonymous) {
+      // Collega l'account anonimo: i salvati esistenti restano tutti.
+      await user.linkWithCredential(credential);
+    } else {
+      await FirebaseAuth.instance.signInWithCredential(credential);
     }
     setState(() {});
   }
@@ -97,6 +164,23 @@ class _AccountScreenState extends State<AccountScreen> {
                 'perderli se cambi telefono.',
               ),
               const SizedBox(height: 20),
+              OutlinedButton.icon(
+                onPressed: _loading ? null : () => _run(_loginWithGoogle),
+                icon: const FaIcon(FontAwesomeIcons.google, size: 18),
+                label: const Text('Continua con Google'),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Expanded(child: Divider()),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text('oppure', style: Theme.of(context).textTheme.bodySmall),
+                  ),
+                  const Expanded(child: Divider()),
+                ],
+              ),
+              const SizedBox(height: 16),
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -120,12 +204,12 @@ class _AccountScreenState extends State<AccountScreen> {
               ],
               const SizedBox(height: 20),
               FilledButton(
-                onPressed: _loading ? null : () => _run(_register),
+                onPressed: _loading ? null : () => _runAuthAction(_register),
                 child: const Text('Crea account (mantieni i salvati)'),
               ),
               const SizedBox(height: 8),
               OutlinedButton(
-                onPressed: _loading ? null : () => _run(_login),
+                onPressed: _loading ? null : () => _runAuthAction(_login),
                 child: const Text('Ho già un account: accedi'),
               ),
             ],

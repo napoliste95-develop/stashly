@@ -1,6 +1,6 @@
 {
-  "versionCode": 18,
-  "version": "0.6.4",
-  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.6.4/stashly-v0.6.4.apk",
-  "changelog": "Risolto un bug per cui la finestra per salvare un nuovo contenuto condiviso da un'altra app a volte non si apriva."
+  "versionCode": 19,
+  "version": "0.6.5",
+  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.6.5/stashly-v0.6.5.apk",
+  "changelog": "Aggiunto l'accesso con Google. Risolto un bug che poteva mostrare un errore tecnico poco chiaro durante l'accesso o la creazione dell'account."
 }
