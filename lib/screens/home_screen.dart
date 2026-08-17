@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/category.dart';
 import '../models/saved_item.dart';
@@ -15,6 +16,10 @@ import 'category_management_screen.dart';
 import 'settings_screen.dart';
 
 enum SortOption { newest, oldest, nameAsc, nameDesc, platform }
+
+enum HomeViewMode { list, grid }
+
+const _viewModePrefsKey = 'home_view_mode';
 
 String sortOptionLabel(SortOption option) {
   switch (option) {
@@ -100,12 +105,31 @@ class _HomeScreenState extends State<HomeScreen> {
   String _searchQuery = '';
   final _searchController = TextEditingController();
   SortOption _sortOption = SortOption.newest;
+  HomeViewMode _viewMode = HomeViewMode.list;
 
   @override
   void initState() {
     super.initState();
     ShareIntentService.instance.init(_onSharedUrl);
     _runStartupChecks();
+    _loadViewMode();
+  }
+
+  Future<void> _loadViewMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(_viewModePrefsKey);
+    final mode = HomeViewMode.values.firstWhere(
+      (m) => m.name == saved,
+      orElse: () => HomeViewMode.list,
+    );
+    if (mounted) setState(() => _viewMode = mode);
+  }
+
+  Future<void> _toggleViewMode() async {
+    final newMode = _viewMode == HomeViewMode.list ? HomeViewMode.grid : HomeViewMode.list;
+    setState(() => _viewMode = newMode);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_viewModePrefsKey, newMode.name);
   }
 
   Future<void> _runStartupChecks() async {
@@ -229,6 +253,15 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(_isSearching ? Icons.close : Icons.search),
             onPressed: _toggleSearch,
           ),
+          IconButton(
+            icon: Icon(
+              _viewMode == HomeViewMode.list
+                  ? Icons.grid_view_outlined
+                  : Icons.view_list_outlined,
+            ),
+            tooltip: _viewMode == HomeViewMode.list ? 'Vista a griglia' : 'Vista a lista',
+            onPressed: _toggleViewMode,
+          ),
           PopupMenuButton<SortOption>(
             icon: const Icon(Icons.sort),
             tooltip: 'Ordina',
@@ -321,13 +354,29 @@ class _HomeScreenState extends State<HomeScreen> {
                         ? const Center(
                             child: Text('Nessun salvato corrisponde ai filtri.'),
                           )
-                        : ListView.builder(
-                            itemCount: filtered.length,
-                            itemBuilder: (context, index) => ItemCard(
-                              item: filtered[index],
-                              categoryById: categoryById,
-                            ),
-                          ),
+                        : _viewMode == HomeViewMode.list
+                            ? ListView.builder(
+                                itemCount: filtered.length,
+                                itemBuilder: (context, index) => ItemCard(
+                                  item: filtered[index],
+                                  categoryById: categoryById,
+                                ),
+                              )
+                            : GridView.builder(
+                                padding: const EdgeInsets.all(8),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  mainAxisSpacing: 8,
+                                  crossAxisSpacing: 8,
+                                  childAspectRatio: 0.85,
+                                ),
+                                itemCount: filtered.length,
+                                itemBuilder: (context, index) => ItemGridTile(
+                                  item: filtered[index],
+                                  categoryById: categoryById,
+                                ),
+                              ),
                   ),
                 ],
               );

@@ -60,6 +60,18 @@ Color platformColor(SocialPlatform platform) {
   }
 }
 
+/// Apre il link del salvato e, se non era ancora stato visto, lo marca
+/// come visto. Condivisa tra [ItemCard] e [ItemGridTile].
+Future<void> openAndMarkSeen(SavedItem item) async {
+  final uri = Uri.tryParse(item.url);
+  if (uri != null) {
+    if (item.seenAt == null) {
+      unawaited(FirestoreService().markItemSeen(item.id));
+    }
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+}
+
 class ItemCard extends StatelessWidget {
   final SavedItem item;
   final Map<String, Category> categoryById;
@@ -134,15 +146,110 @@ class ItemCard extends StatelessWidget {
             PopupMenuItem(value: 'delete', child: Text('Elimina')),
           ],
         ),
-        onTap: () async {
-          final uri = Uri.tryParse(item.url);
-          if (uri != null) {
-            if (item.seenAt == null) {
-              unawaited(FirestoreService().markItemSeen(item.id));
-            }
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-          }
-        },
+        onTap: () => openAndMarkSeen(item),
+      ),
+    );
+  }
+}
+
+class ItemGridTile extends StatelessWidget {
+  final SavedItem item;
+  final Map<String, Category> categoryById;
+
+  const ItemGridTile({super.key, required this.item, required this.categoryById});
+
+  @override
+  Widget build(BuildContext context) {
+    final categories = item.categoryIds
+        .map((id) => categoryById[id])
+        .whereType<Category>()
+        .toList();
+
+    return Card(
+      margin: const EdgeInsets.all(4),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => openAndMarkSeen(item),
+        child: Stack(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 72,
+                  width: double.infinity,
+                  color: platformColor(item.platform),
+                  child: Center(
+                    child: FaIcon(
+                      platformIcon(item.platform),
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+                  child: Text(
+                    item.title.isNotEmpty ? item.title : item.url,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ),
+                if (categories.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                    child: Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      children: [
+                        ...categories.take(2).map(
+                              (c) => Chip(
+                                label: Text(
+                                  c.name,
+                                  style: const TextStyle(fontSize: 10),
+                                ),
+                                backgroundColor: c.color.withValues(alpha: 0.2),
+                                visualDensity: VisualDensity.compact,
+                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                padding: EdgeInsets.zero,
+                              ),
+                            ),
+                        if (categories.length > 2)
+                          Chip(
+                            label: Text(
+                              '+${categories.length - 2}',
+                              style: const TextStyle(fontSize: 10),
+                            ),
+                            visualDensity: VisualDensity.compact,
+                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            padding: EdgeInsets.zero,
+                          ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            Positioned(
+              top: 0,
+              right: 0,
+              child: PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, color: Colors.white, size: 20),
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    openItemSheet(context, existingItem: item);
+                  } else if (value == 'delete') {
+                    FirestoreService().deleteItem(item.id);
+                  }
+                },
+                itemBuilder: (context) => const [
+                  PopupMenuItem(value: 'edit', child: Text('Modifica')),
+                  PopupMenuItem(value: 'delete', child: Text('Elimina')),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
