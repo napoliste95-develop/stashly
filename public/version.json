@@ -1,6 +1,6 @@
 {
-  "versionCode": 14,
-  "version": "0.6.0",
-  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.6.0/stashly-v0.6.0.apk",
-  "changelog": "Nuovo: promemoria settimanale per i salvati mai aperti, personalizzabile o disattivabile da Impostazioni."
+  "versionCode": 15,
+  "version": "0.6.1",
+  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.6.1/stashly-v0.6.1.apk",
+  "changelog": "Restyling gestione categorie: card colorate, swipe per modificare/eliminare (con conferma), conteggio salvati con icona."
 }

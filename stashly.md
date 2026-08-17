@@ -1,6 +1,6 @@
 # Stashly — Contesto di progetto
 
-Documento di riepilogo per riprendere il lavoro su Stashly in una nuova conversazione senza dover rispiegare tutto da capo. Ultimo aggiornamento: versione app **0.6.0** (build 14).
+Documento di riepilogo per riprendere il lavoro su Stashly in una nuova conversazione senza dover rispiegare tutto da capo. Ultimo aggiornamento: versione app **0.6.1** (build 15).
 
 ## Modi di operare concordati con l'utente
 
@@ -129,6 +129,7 @@ firebase.json             # Config Hosting (public/) + Firestore rules/indexes
 25. **Card salvato ridisegnata**: l'avatar mostra ora l'icona ufficiale del social (pacchetto `font_awesome_flutter` ^11.0.0, tipo `FaIconData`) invece della lettera iniziale, mantenendo il colore di sfondo caratteristico della piattaforma (`platformIcon`/`platformColor` in `lib/widgets/item_card.dart`)
 26. **Promemoria settimanale "salvati non visti"**: nuovo campo `seenAt` su ogni salvato (null finché non viene aperto col tap, aggiornato in `item_card.dart` onTap). Migrazione one-shot (`migrateMarkExistingItemsAsSeenIfNeeded` in `firestore_service.dart`, flag `migrated_seen_at_v1` in SharedPreferences) marca come già visti tutti i salvati esistenti prima del rilascio della feature, così la prima notifica non conta mesi di arretrato. Notifica locale (no backend, `flutter_local_notifications` + `workmanager`) schedulata settimanalmente su giorno/ora configurabili da Impostazioni (default domenica 18:00), saltata se il conteggio non visti è 0. Attiva di default, disattivabile; richiede il permesso `POST_NOTIFICATIONS` (Android 13+) richiesto una sola volta al primo avvio utile, con scorciatoia alle impostazioni di sistema (`permission_handler`) se negato in modo permanente. Icona di notifica monocroma generata con `scripts/generate_notification_icon.ps1` (stessa "S" del logo, silhouette bianca su trasparente). Funzione pura `computeInitialDelay` (calcolo prossima occorrenza giorno/ora) testata in `test/compute_initial_delay_test.dart`.
     - **Rischio noto**: la consegna non è garantita al minuto (Doze mode, risparmio energetico OEM aggressivo su Xiaomi/Huawei/Samsung possono ritardarla o in rari casi impedirla) — segnalato in UI. Il funzionamento dell'isolate di background dopo kill completo dell'app (re-init Firebase + sessione anonima persistita) va sempre verificato manualmente sul dispositivo dopo modifiche a questa area, non è testabile con `flutter test`.
+27. **Restyling gestione categorie** (`lib/screens/category_management_screen.dart`): ogni card categoria è ora tinta col colore della categoria (`category.color.withValues(alpha: 0.4)`); le azioni modifica/elimina non sono più pulsanti sempre visibili ma gesture di swipe su `Dismissible` (destra = rinomina, sinistra = elimina con conferma via `_confirmDelete`); pulsante "?" nell'AppBar che spiega le gesture; il conteggio salvati per categoria mostra icona `bookmark_outline` + numero invece del testo "N salvati".
 
 ## Come funziona il rilascio di una nuova versione
 
