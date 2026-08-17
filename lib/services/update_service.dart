@@ -3,8 +3,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 
-import 'error_log_service.dart';
-
 const String updateManifestUrl =
     'https://stashly-napoli-77201.web.app/version.json';
 
@@ -47,7 +45,6 @@ class UpdateService {
         changelog: data['changelog'] as String? ?? '',
       );
     } catch (e) {
-      await ErrorLogService.instance.log('Errore controllo aggiornamenti: $e');
       return null;
     }
   }

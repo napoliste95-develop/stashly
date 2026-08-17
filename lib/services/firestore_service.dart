@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/category.dart';
 import '../models/saved_item.dart';
-import 'error_log_service.dart';
 
 const _migratedSeenAtPrefsKey = 'migrated_seen_at_v1';
 
@@ -26,17 +25,12 @@ class FirestoreService {
     required String type,
     required String message,
   }) async {
-    try {
-      await _db.collection('feedback').add({
-        'type': type,
-        'message': message.trim(),
-        'userId': _uid,
-        'createdAt': Timestamp.now(),
-      });
-    } catch (e) {
-      await ErrorLogService.instance.log('Errore invio segnalazione: $e');
-      rethrow;
-    }
+    await _db.collection('feedback').add({
+      'type': type,
+      'message': message.trim(),
+      'userId': _uid,
+      'createdAt': Timestamp.now(),
+    });
   }
 
   // ---------------- Items ----------------
@@ -74,7 +68,8 @@ class FirestoreService {
         'title': data['title'] ?? data['note'] ?? '',
       });
     } catch (e) {
-      await ErrorLogService.instance.log('Errore migrazione elemento: $e');
+      // Best-effort: se fallisce, l'item resta nel formato legacy e verrà
+      // ritentato al prossimo caricamento della lista.
     }
   }
 
@@ -85,20 +80,15 @@ class FirestoreService {
     required List<String> categoryIds,
     required String note,
   }) async {
-    try {
-      await _itemsRef.add({
-        'url': url,
-        'platform': platform.name,
-        'title': title.trim(),
-        'categoryIds': categoryIds,
-        'note': note.trim(),
-        'createdAt': Timestamp.now(),
-        'seenAt': null,
-      });
-    } catch (e) {
-      await ErrorLogService.instance.log('Errore salvataggio elemento: $e');
-      rethrow;
-    }
+    await _itemsRef.add({
+      'url': url,
+      'platform': platform.name,
+      'title': title.trim(),
+      'categoryIds': categoryIds,
+      'note': note.trim(),
+      'createdAt': Timestamp.now(),
+      'seenAt': null,
+    });
   }
 
   /// Segna un salvato come visto (aperto dall'utente). Best-effort: non
@@ -107,7 +97,7 @@ class FirestoreService {
     try {
       await _itemsRef.doc(id).update({'seenAt': Timestamp.now()});
     } catch (e) {
-      await ErrorLogService.instance.log('Errore aggiornamento visto elemento: $e');
+      // ignorato volutamente, vedi commento sopra.
     }
   }
 
@@ -138,7 +128,6 @@ class FirestoreService {
         await batch.commit();
       }
     } catch (e) {
-      await ErrorLogService.instance.log('Errore migrazione visto elementi esistenti: $e');
       return;
     }
     await prefs.setBool(_migratedSeenAtPrefsKey, true);
@@ -152,27 +141,17 @@ class FirestoreService {
     required List<String> categoryIds,
     required String note,
   }) async {
-    try {
-      await _itemsRef.doc(id).update({
-        'url': url,
-        'platform': platform.name,
-        'title': title.trim(),
-        'categoryIds': categoryIds,
-        'note': note.trim(),
-      });
-    } catch (e) {
-      await ErrorLogService.instance.log('Errore modifica elemento: $e');
-      rethrow;
-    }
+    await _itemsRef.doc(id).update({
+      'url': url,
+      'platform': platform.name,
+      'title': title.trim(),
+      'categoryIds': categoryIds,
+      'note': note.trim(),
+    });
   }
 
   Future<void> deleteItem(String id) async {
-    try {
-      await _itemsRef.doc(id).delete();
-    } catch (e) {
-      await ErrorLogService.instance.log('Errore eliminazione elemento: $e');
-      rethrow;
-    }
+    await _itemsRef.doc(id).delete();
   }
 
   // ---------------- Categories ----------------
@@ -186,17 +165,12 @@ class FirestoreService {
   }
 
   Future<String> createCategory(String name) async {
-    try {
-      final chosenColor = await _pickUnusedColor();
-      final doc = await _categoriesRef.add({
-        'name': name.trim(),
-        'color': chosenColor.toARGB32(),
-      });
-      return doc.id;
-    } catch (e) {
-      await ErrorLogService.instance.log('Errore creazione categoria: $e');
-      rethrow;
-    }
+    final chosenColor = await _pickUnusedColor();
+    final doc = await _categoriesRef.add({
+      'name': name.trim(),
+      'color': chosenColor.toARGB32(),
+    });
+    return doc.id;
   }
 
   /// Sceglie un colore della tavolozza non ancora usato da nessuna
@@ -220,37 +194,22 @@ class FirestoreService {
   }
 
   Future<void> renameCategory(String id, String newName) async {
-    try {
-      await _categoriesRef.doc(id).update({'name': newName.trim()});
-    } catch (e) {
-      await ErrorLogService.instance.log('Errore rinomina categoria: $e');
-      rethrow;
-    }
+    await _categoriesRef.doc(id).update({'name': newName.trim()});
   }
 
   Future<void> updateCategoryColor(String id, Color color) async {
-    try {
-      await _categoriesRef.doc(id).update({'color': color.toARGB32()});
-    } catch (e) {
-      await ErrorLogService.instance.log('Errore aggiornamento colore categoria: $e');
-      rethrow;
-    }
+    await _categoriesRef.doc(id).update({'color': color.toARGB32()});
   }
 
   Future<void> deleteCategory(String id) async {
-    try {
-      final affected = await _itemsRef.where('categoryIds', arrayContains: id).get();
-      final batch = _db.batch();
-      for (final doc in affected.docs) {
-        final ids = (doc.data()['categoryIds'] as List).cast<String>();
-        ids.remove(id);
-        batch.update(doc.reference, {'categoryIds': ids});
-      }
-      batch.delete(_categoriesRef.doc(id));
-      await batch.commit();
-    } catch (e) {
-      await ErrorLogService.instance.log('Errore eliminazione categoria: $e');
-      rethrow;
+    final affected = await _itemsRef.where('categoryIds', arrayContains: id).get();
+    final batch = _db.batch();
+    for (final doc in affected.docs) {
+      final ids = (doc.data()['categoryIds'] as List).cast<String>();
+      ids.remove(id);
+      batch.update(doc.reference, {'categoryIds': ids});
     }
+    batch.delete(_categoriesRef.doc(id));
+    await batch.commit();
   }
 }

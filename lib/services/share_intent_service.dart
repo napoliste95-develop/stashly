@@ -2,8 +2,6 @@ import 'dart:async';
 
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
-import 'error_log_service.dart';
-
 /// Estrae il primo link http/https trovato in un testo condiviso
 /// (alcune app aggiungono testo extra prima o dopo il link).
 String? extractUrl(String text) {
@@ -20,7 +18,6 @@ class ShareIntentService {
   void init(void Function(String url) onSharedUrl) {
     _sub = ReceiveSharingIntent.instance.getMediaStream().listen(
       (files) => _handle(files, onSharedUrl),
-      onError: (e) => ErrorLogService.instance.log('Errore ricezione condivisione: $e'),
     );
 
     ReceiveSharingIntent.instance.getInitialMedia().then((files) {

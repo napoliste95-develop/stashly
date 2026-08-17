@@ -1,6 +1,6 @@
 {
-  "versionCode": 16,
-  "version": "0.6.2",
-  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.6.2/stashly-v0.6.2.apk",
-  "changelog": "Nuovo: vista a griglia nella home, in alternativa alla lista (scelta ricordata)."
+  "versionCode": 17,
+  "version": "0.6.3",
+  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.6.3/stashly-v0.6.3.apk",
+  "changelog": "Impostazioni riorganizzate: Aspetto e Promemoria in sottomenu dedicati. Rimossa la voce Log errori."
 }

@@ -5,7 +5,6 @@ import 'package:workmanager/workmanager.dart';
 
 import 'firebase_options.dart';
 import 'screens/home_screen.dart';
-import 'services/error_log_service.dart';
 import 'services/firestore_service.dart';
 import 'services/notification_service.dart';
 import 'services/theme_service.dart';
@@ -13,7 +12,6 @@ import 'services/theme_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await ErrorLogService.instance.load();
   await ThemeService.instance.load();
   await Workmanager().initialize(callbackDispatcher);
   await NotificationService.instance.load();
@@ -54,12 +52,7 @@ class AuthGate extends StatelessWidget {
 
   Future<void> _ensureSignedIn() async {
     if (FirebaseAuth.instance.currentUser == null) {
-      try {
-        await FirebaseAuth.instance.signInAnonymously();
-      } catch (e) {
-        await ErrorLogService.instance.log('Errore accesso anonimo: $e');
-        rethrow;
-      }
+      await FirebaseAuth.instance.signInAnonymously();
     }
     await FirestoreService().migrateMarkExistingItemsAsSeenIfNeeded();
   }

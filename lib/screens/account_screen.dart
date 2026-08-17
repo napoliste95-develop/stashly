@@ -1,8 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../services/error_log_service.dart';
-
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
 
@@ -32,10 +30,8 @@ class _AccountScreenState extends State<AccountScreen> {
       await action();
     } on FirebaseAuthException catch (e) {
       setState(() => _error = e.message ?? e.code);
-      await ErrorLogService.instance.log('Errore autenticazione: ${e.code}');
     } catch (e) {
       setState(() => _error = e.toString());
-      await ErrorLogService.instance.log('Errore autenticazione: $e');
     } finally {
       if (mounted) setState(() => _loading = false);
     }

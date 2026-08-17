@@ -4,8 +4,6 @@ import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 
-import 'error_log_service.dart';
-
 class ApkInstallerService {
   static const _maxAttempts = 3;
 
@@ -48,9 +46,6 @@ class ApkInstallerService {
         return file;
       } catch (e) {
         lastError = e;
-        await ErrorLogService.instance.log(
-          'Tentativo $attempt/$_maxAttempts di download aggiornamento fallito: $e',
-        );
         if (attempt < _maxAttempts) {
           await Future.delayed(Duration(seconds: attempt * 2));
         }
@@ -67,9 +62,6 @@ class ApkInstallerService {
   Future<void> install(File file) async {
     final result = await OpenFilex.open(file.path);
     if (result.type != ResultType.done) {
-      await ErrorLogService.instance.log(
-        'Errore avvio installer aggiornamento: ${result.type} - ${result.message}',
-      );
       throw Exception(result.message);
     }
   }
