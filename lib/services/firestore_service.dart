@@ -1,10 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/category.dart';
 import '../models/saved_item.dart';
 import 'error_log_service.dart';
+
+const _migratedSeenAtPrefsKey = 'migrated_seen_at_v1';
 
 class FirestoreService {
   final _db = FirebaseFirestore.instance;
@@ -90,11 +93,55 @@ class FirestoreService {
         'categoryIds': categoryIds,
         'note': note.trim(),
         'createdAt': Timestamp.now(),
+        'seenAt': null,
       });
     } catch (e) {
       await ErrorLogService.instance.log('Errore salvataggio elemento: $e');
       rethrow;
     }
+  }
+
+  /// Segna un salvato come visto (aperto dall'utente). Best-effort: non
+  /// deve mai bloccare l'apertura del link se fallisce.
+  Future<void> markItemSeen(String id) async {
+    try {
+      await _itemsRef.doc(id).update({'seenAt': Timestamp.now()});
+    } catch (e) {
+      await ErrorLogService.instance.log('Errore aggiornamento visto elemento: $e');
+    }
+  }
+
+  /// Conta i salvati mai aperti (campo 'seenAt' nullo), con una query di
+  /// aggregazione lato server (un solo round-trip, nessun documento scaricato).
+  Future<int> countUnseenItems() async {
+    final aggregate = await _itemsRef.where('seenAt', isEqualTo: null).count().get();
+    return aggregate.count ?? 0;
+  }
+
+  /// Marca come "già visti" tutti i salvati creati prima dell'introduzione
+  /// del tracking 'seenAt', così il primo promemoria settimanale non conta
+  /// mesi di arretrato mai aperto. Va eseguita una sola volta per utente:
+  /// il flag di completamento è persistito in locale (SharedPreferences).
+  Future<void> migrateMarkExistingItemsAsSeenIfNeeded() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_migratedSeenAtPrefsKey) == true) return;
+    try {
+      final snapshot = await _itemsRef.get();
+      final now = Timestamp.now();
+      final toMigrate = snapshot.docs.where((doc) => !doc.data().containsKey('seenAt')).toList();
+      for (var i = 0; i < toMigrate.length; i += 500) {
+        final chunk = toMigrate.skip(i).take(500);
+        final batch = _db.batch();
+        for (final doc in chunk) {
+          batch.update(doc.reference, {'seenAt': now});
+        }
+        await batch.commit();
+      }
+    } catch (e) {
+      await ErrorLogService.instance.log('Errore migrazione visto elementi esistenti: $e');
+      return;
+    }
+    await prefs.setBool(_migratedSeenAtPrefsKey, true);
   }
 
   Future<void> updateItem(

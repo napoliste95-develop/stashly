@@ -1,10 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:workmanager/workmanager.dart';
 
 import 'firebase_options.dart';
 import 'screens/home_screen.dart';
 import 'services/error_log_service.dart';
+import 'services/firestore_service.dart';
+import 'services/notification_service.dart';
 import 'services/theme_service.dart';
 
 void main() async {
@@ -12,6 +15,8 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await ErrorLogService.instance.load();
   await ThemeService.instance.load();
+  await Workmanager().initialize(callbackDispatcher);
+  await NotificationService.instance.load();
   runApp(const StashlyApp());
 }
 
@@ -56,6 +61,7 @@ class AuthGate extends StatelessWidget {
         rethrow;
       }
     }
+    await FirestoreService().migrateMarkExistingItemsAsSeenIfNeeded();
   }
 
   @override

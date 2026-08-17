@@ -70,6 +70,7 @@ class SavedItem {
   final List<String> categoryIds;
   final String note;
   final DateTime createdAt;
+  final DateTime? seenAt;
 
   SavedItem({
     required this.id,
@@ -79,6 +80,7 @@ class SavedItem {
     required this.categoryIds,
     required this.note,
     required this.createdAt,
+    this.seenAt,
   });
 
   factory SavedItem.fromFirestore(String id, Map<String, dynamic> data) {
@@ -93,6 +95,7 @@ class SavedItem {
       categoryIds: (data['categoryIds'] as List?)?.cast<String>() ?? [],
       note: data['note'] as String? ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      seenAt: (data['seenAt'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -104,6 +107,7 @@ class SavedItem {
       'categoryIds': categoryIds,
       'note': note,
       'createdAt': Timestamp.fromDate(createdAt),
+      'seenAt': seenAt == null ? null : Timestamp.fromDate(seenAt!),
     };
   }
 }

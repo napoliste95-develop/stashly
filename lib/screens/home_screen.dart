@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/category.dart';
 import '../models/saved_item.dart';
 import '../services/firestore_service.dart';
+import '../services/notification_service.dart';
 import '../services/share_intent_service.dart';
 import '../services/update_service.dart';
 import '../widgets/item_card.dart';
@@ -110,6 +111,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _runStartupChecks() async {
     await maybeShowWelcomeDialog(context);
     await _checkForUpdateSilently();
+    await _maybeRequestNotificationPermission();
+  }
+
+  Future<void> _maybeRequestNotificationPermission() async {
+    final notifications = NotificationService.instance;
+    if (notifications.enabled && !notifications.permissionAlreadyAsked) {
+      await notifications.requestPermissionIfNeeded();
+    }
   }
 
   Future<void> _checkForUpdateSilently() async {

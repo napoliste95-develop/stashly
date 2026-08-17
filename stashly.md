@@ -1,6 +1,6 @@
 # Stashly — Contesto di progetto
 
-Documento di riepilogo per riprendere il lavoro su Stashly in una nuova conversazione senza dover rispiegare tutto da capo. Ultimo aggiornamento: versione app **0.5.4** (build 13).
+Documento di riepilogo per riprendere il lavoro su Stashly in una nuova conversazione senza dover rispiegare tutto da capo. Ultimo aggiornamento: versione app **0.6.0** (build 14).
 
 ## Modi di operare concordati con l'utente
 
@@ -40,6 +40,7 @@ users/{uid}/items/{itemId}
   - categoryIds: string[]   (un item può appartenere a più categorie)
   - note: string
   - createdAt: timestamp
+  - seenAt: timestamp | null   (null = mai aperto dall'utente; impostato al tap sulla card)
 
 users/{uid}/categories/{categoryId}
   - name: string
@@ -70,6 +71,7 @@ lib/
     share_intent_service.dart # Riceve condivisioni da altre app (Android SEND intent)
     update_service.dart    # Controlla version.json e confronta con versione installata
     apk_installer_service.dart # Scarica l'APK e avvia l'installer di sistema
+    notification_service.dart  # Promemoria settimanale locale (workmanager + flutter_local_notifications)
   screens/
     home_screen.dart       # Schermata principale: lista + filtro categorie + drawer
     account_screen.dart    # Login/registrazione, upgrade da anonimo
@@ -125,6 +127,8 @@ firebase.json             # Config Hosting (public/) + Firestore rules/indexes
 23. **Icona dell'app**: sostituita l'icona di default di Flutter con una S rossa (#DC2626) su sfondo nero. Sorgenti in `assets/icon/` (icon.png per l'icona legacy, icon_foreground.png trasparente per l'adaptive icon), generate con script PowerShell (System.Drawing) e applicate a tutte le densità con il pacchetto `flutter_launcher_icons` (configurazione in `pubspec.yaml`). Nome dell'app non ancora deciso definitivamente — "Stashly" resta l'ipotesi principale, altre alternative discusse con l'utente ma non ancora scelte
 24. **Nuove piattaforme riconosciute**: oltre a Instagram/TikTok/Pinterest, ora anche YouTube, X (ex Twitter), Facebook, Reddit, Threads, Twitch (`SocialPlatform` in `lib/models/saved_item.dart`, riconoscimento dominio in `platformFromUrl`)
 25. **Card salvato ridisegnata**: l'avatar mostra ora l'icona ufficiale del social (pacchetto `font_awesome_flutter` ^11.0.0, tipo `FaIconData`) invece della lettera iniziale, mantenendo il colore di sfondo caratteristico della piattaforma (`platformIcon`/`platformColor` in `lib/widgets/item_card.dart`)
+26. **Promemoria settimanale "salvati non visti"**: nuovo campo `seenAt` su ogni salvato (null finché non viene aperto col tap, aggiornato in `item_card.dart` onTap). Migrazione one-shot (`migrateMarkExistingItemsAsSeenIfNeeded` in `firestore_service.dart`, flag `migrated_seen_at_v1` in SharedPreferences) marca come già visti tutti i salvati esistenti prima del rilascio della feature, così la prima notifica non conta mesi di arretrato. Notifica locale (no backend, `flutter_local_notifications` + `workmanager`) schedulata settimanalmente su giorno/ora configurabili da Impostazioni (default domenica 18:00), saltata se il conteggio non visti è 0. Attiva di default, disattivabile; richiede il permesso `POST_NOTIFICATIONS` (Android 13+) richiesto una sola volta al primo avvio utile, con scorciatoia alle impostazioni di sistema (`permission_handler`) se negato in modo permanente. Icona di notifica monocroma generata con `scripts/generate_notification_icon.ps1` (stessa "S" del logo, silhouette bianca su trasparente). Funzione pura `computeInitialDelay` (calcolo prossima occorrenza giorno/ora) testata in `test/compute_initial_delay_test.dart`.
+    - **Rischio noto**: la consegna non è garantita al minuto (Doze mode, risparmio energetico OEM aggressivo su Xiaomi/Huawei/Samsung possono ritardarla o in rari casi impedirla) — segnalato in UI. Il funzionamento dell'isolate di background dopo kill completo dell'app (re-init Firebase + sessione anonima persistita) va sempre verificato manualmente sul dispositivo dopo modifiche a questa area, non è testabile con `flutter test`.
 
 ## Come funziona il rilascio di una nuova versione
 

@@ -2,6 +2,8 @@
     <!-- Necessario per installare direttamente l'APK scaricato in-app
          durante il controllo aggiornamenti. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Necessario per mostrare la notifica di promemoria settimanale (Android 13+). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
         android:label="stashly"
         android:name="${applicationName}"

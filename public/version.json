@@ -1,6 +1,6 @@
 {
-  "versionCode": 13,
-  "version": "0.5.4",
-  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.5.4/stashly-v0.5.4.apk",
-  "changelog": "Aggiunte 6 nuove piattaforme riconosciute: YouTube, X, Facebook, Reddit, Threads, Twitch. Card dei salvati ridisegnata con l'icona ufficiale del social al posto della lettera iniziale."
+  "versionCode": 14,
+  "version": "0.6.0",
+  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.6.0/stashly-v0.6.0.apk",
+  "changelog": "Nuovo: promemoria settimanale per i salvati mai aperti, personalizzabile o disattivabile da Impostazioni."
 }
