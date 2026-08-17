@@ -135,7 +135,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     }
   }
 
-  Future<void> _delete(Category category) async {
+  Future<bool> _confirmDelete(Category category) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -156,8 +156,10 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         ],
       ),
     );
-    if (confirmed != true) return;
+    return confirmed == true;
+  }
 
+  Future<void> _delete(Category category) async {
     setState(() => _busy = true);
     try {
       await _service.deleteCategory(category.id);
@@ -166,12 +168,37 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     }
   }
 
+  void _showGestureHelp() {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Come modificare o eliminare'),
+        content: const Text(
+          'Scorri una categoria verso destra per rinominarla, '
+          'verso sinistra per eliminarla. Tocca il pallino colorato '
+          'per cambiarne il colore.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Ho capito'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gestisci categorie'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            tooltip: 'Come funziona',
+            onPressed: _showGestureHelp,
+          ),
           IconButton(
             icon: const Icon(Icons.add),
             tooltip: 'Nuova categoria',
@@ -204,34 +231,75 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                       final count = items
                           .where((i) => i.categoryIds.contains(category.id))
                           .length;
-                      return ListTile(
-                        leading: GestureDetector(
-                          onTap: () => _changeColor(category, categories),
-                          child: CircleAvatar(
-                            backgroundColor: category.color,
-                            child: const Icon(
-                              Icons.bookmark,
-                              color: Colors.white,
-                              size: 18,
-                            ),
+                      return Dismissible(
+                        key: ValueKey(category.id),
+                        direction: DismissDirection.horizontal,
+                        background: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          alignment: Alignment.centerLeft,
+                          decoration: BoxDecoration(
+                            color: Colors.blue,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.edit_outlined, color: Colors.white),
+                              SizedBox(width: 8),
+                              Text('Modifica', style: TextStyle(color: Colors.white)),
+                            ],
                           ),
                         ),
-                        title: Text(category.name),
-                        subtitle: Text(
-                          count == 1 ? '1 salvato' : '$count salvati',
+                        secondaryBackground: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          alignment: Alignment.centerRight,
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Text('Elimina', style: TextStyle(color: Colors.white)),
+                              SizedBox(width: 8),
+                              Icon(Icons.delete_outline, color: Colors.white),
+                            ],
+                          ),
                         ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.edit_outlined),
-                              onPressed: () => _rename(category),
+                        confirmDismiss: (direction) async {
+                          if (direction == DismissDirection.startToEnd) {
+                            await _rename(category);
+                            return false;
+                          }
+                          return _confirmDelete(category);
+                        },
+                        onDismissed: (_) => _delete(category),
+                        child: Card(
+                          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          color: category.color.withValues(alpha: 0.4),
+                          child: ListTile(
+                            leading: GestureDetector(
+                              onTap: () => _changeColor(category, categories),
+                              child: CircleAvatar(
+                                backgroundColor: category.color,
+                                child: const Icon(
+                                  Icons.bookmark,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline),
-                              onPressed: () => _delete(category),
+                            title: Text(category.name),
+                            subtitle: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.bookmark_outline, size: 14),
+                                const SizedBox(width: 4),
+                                Text('$count'),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       );
                     },
