@@ -176,6 +176,39 @@ class FirestoreService {
     }
   }
 
+  /// Aggiorna in blocco `linkStatus`/`lastCheckedAt` per gli item indicati,
+  /// dopo un giro di controllo link. Stesso pattern a blocchi di 500 di
+  /// [restoreItems]/[migrateMarkExistingItemsAsSeenIfNeeded].
+  Future<void> updateLinkStatuses(Map<String, LinkStatus> statusByItemId, DateTime checkedAt) async {
+    final entries = statusByItemId.entries.toList();
+    final timestamp = Timestamp.fromDate(checkedAt);
+    for (var i = 0; i < entries.length; i += 500) {
+      final chunk = entries.skip(i).take(500);
+      final batch = _db.batch();
+      for (final entry in chunk) {
+        batch.update(_itemsRef.doc(entry.key), {
+          'linkStatus': entry.value.name,
+          'lastCheckedAt': timestamp,
+        });
+      }
+      await batch.commit();
+    }
+  }
+
+  /// Aggiorna lo stato di un singolo item dopo un controllo manuale.
+  /// Best-effort, come [markItemSeen]: non deve mai bloccare l'azione
+  /// dell'utente se fallisce.
+  Future<void> updateSingleLinkStatus(String id, LinkStatus status, DateTime checkedAt) async {
+    try {
+      await _itemsRef.doc(id).update({
+        'linkStatus': status.name,
+        'lastCheckedAt': Timestamp.fromDate(checkedAt),
+      });
+    } catch (e) {
+      // ignorato volutamente, vedi commento sopra.
+    }
+  }
+
   // ---------------- Categories ----------------
 
   Stream<List<Category>> watchCategories() {

@@ -1,6 +1,6 @@
 # Stashly — Contesto di progetto
 
-Documento di riepilogo per riprendere il lavoro su Stashly in una nuova conversazione senza dover rispiegare tutto da capo. Ultimo aggiornamento: versione app **0.6.8** (build 23).
+Documento di riepilogo per riprendere il lavoro su Stashly in una nuova conversazione senza dover rispiegare tutto da capo. Ultimo aggiornamento: versione app **0.6.82** (build 24).
 
 ## Modi di operare concordati con l'utente
 
@@ -39,6 +39,8 @@ users/{uid}/items/{itemId}
   - note: string
   - createdAt: timestamp
   - seenAt: timestamp | null   (null = mai aperto dall'utente; impostato al tap)
+  - linkStatus: 'unknown' | 'alive' | 'dead' | 'unverifiable'   (esito dell'ultimo controllo di raggiungibilità, default 'unknown')
+  - lastCheckedAt: timestamp | null   (data dell'ultimo controllo link, null se mai controllato)
 
 users/{uid}/categories/{categoryId}
   - name: string
@@ -69,18 +71,21 @@ lib/
     share_intent_service.dart # Riceve condivisioni da altre app (Android SEND intent)
     update_service.dart    # Controlla version.json, confronta con versione installata, gestisce il flag di reinstallo manuale
     apk_installer_service.dart # Scarica l'APK e avvia l'installer di sistema
-    notification_service.dart  # Promemoria settimanale locale (workmanager + flutter_local_notifications)
+    notification_service.dart  # Promemoria settimanale locale (workmanager + flutter_local_notifications); dispatcher del task periodico condiviso con link_check_service.dart (branch su nome task)
+    link_check_service.dart    # Controllo raggiungibilità link (status HTTP), manuale e periodico (workmanager), notifica riepilogativa sui nuovi link morti
   screens/
     home_screen.dart       # Schermata principale: lista/griglia + filtro categorie + ricerca/ordina + drawer
     account_screen.dart    # Login/registrazione, upgrade da anonimo
     category_management_screen.dart # Card colorate, swipe per rinominare/eliminare
     statistics_screen.dart # Grafici a torta (fl_chart): distribuzione per piattaforma/categoria, % mai aperti, categoria più/meno usata
-    settings_screen.dart   # Tema, promemoria, export/import dati, controlla aggiornamenti, versione, log errori, feedback
+    settings_screen.dart   # Tema, promemoria, controllo link, export/import dati, controlla aggiornamenti, versione, log errori, feedback
+    reminder_settings_screen.dart    # On/off + giorno/ora del promemoria settimanale
+    link_check_settings_screen.dart  # On/off controllo automatico link (default off) + "Verifica tutti i link ora"
     feedback_screen.dart   # Form segnalazione bug / proposta funzionalità
     error_log_screen.dart
     version_screen.dart
   widgets/
-    item_card.dart         # ItemCard (lista) + ItemGridTile (griglia), icone brand reali per piattaforma
+    item_card.dart         # ItemCard (lista) + ItemGridTile (griglia), icone brand reali per piattaforma, badge "forse non più disponibile" + voce menu "Verifica link"
     add_item_sheet.dart    # Foglio aggiunta/modifica (multi-categoria, nome, nota)
     item_sheet_helper.dart # Helper condiviso per aprire il foglio con le categorie aggiornate
     update_dialog.dart     # Dialog di aggiornamento con progress bar download+installazione; se requiresManualReinstall è true mostra un banner di avviso al posto del pulsante "Scarica e installa"
@@ -123,6 +128,13 @@ firebase.json             # Config Hosting (public/) + Firestore rules/indexes
 **Notifiche**
 - Promemoria settimanale locale (no backend) dei salvati mai aperti, attivo di default, configurabile/disattivabile da Impostazioni (giorno/ora), saltato se il conteggio è zero
 - **Rischio noto**: la consegna non è garantita al minuto (Doze mode, risparmio energetico OEM aggressivo) — segnalato in UI
+
+**Controllo link non più disponibili**
+- Segnale "best effort" basato solo sullo status HTTP del link (404/410 → probabilmente morto; errori di rete/timeout/status ambigui → "non verificabile", mai trattato come morto per evitare falsi positivi); nessun parsing del contenuto specifico per piattaforma
+- Trigger manuale: voce "Verifica link" nel menu di ogni salvato (aggiorna subito lo stato), oppure "Verifica tutti i link ora" da Impostazioni → Controllo link (nessun limite di quantità, in foreground)
+- Trigger automatico: job periodico settimanale (workmanager, condivide il dispatcher con il promemoria in `notification_service.dart`, branch sul nome del task), **disattivato di default** (opt-in, perché contatta siti di terzi); ogni esecuzione controlla al massimo ~150 item a rotazione (i meno recentemente controllati/mai controllati), per restare dentro i tempi concessi da Android ai job in background
+- Alla rilevazione: badge visivo sulla card ("Forse non più disponibile", solo per stato `dead`, mai per `unverifiable`/`unknown`) sia in lista sia in griglia, più una notifica locale riepilogativa (canale/id distinti dal promemoria) solo se il giro periodico trova *nuovi* link morti rispetto al giro precedente
+- Export/import preserva `linkStatus`/`lastCheckedAt` così come sono, coerente con `seenAt`
 
 **Aggiornamenti in-app**
 - L'app controlla `version.json` all'avvio e su richiesta, scarica l'APK e avvia l'installazione da sola (con retry automatico su reti instabili)

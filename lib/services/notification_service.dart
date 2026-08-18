@@ -7,7 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
 import '../firebase_options.dart';
+import '../models/saved_item.dart';
 import 'firestore_service.dart';
+import 'link_check_service.dart';
 
 const kUnseenReminderTask = 'unseen_reminder_task';
 
@@ -50,9 +52,16 @@ void callbackDispatcher() {
     try {
       await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
       if (FirebaseAuth.instance.currentUser == null) return true;
-      final count = await FirestoreService().countUnseenItems();
-      if (count > 0) {
-        await _showUnseenNotification(count);
+      if (task == kDeadLinkCheckTask) {
+        final result = await LinkCheckService.instance.runBackgroundCheck();
+        if (result.newlyDead.isNotEmpty) {
+          await _showDeadLinksNotification(result.newlyDead);
+        }
+      } else {
+        final count = await FirestoreService().countUnseenItems();
+        if (count > 0) {
+          await _showUnseenNotification(count);
+        }
       }
     } catch (_) {
       // Best-effort: un fallimento qui non deve far ripetere il task
@@ -78,6 +87,31 @@ Future<void> _showUnseenNotification(int count) async {
   final body = count == 1 ? 'Hai 1 salvato non ancora visto' : 'Hai $count salvati non ancora visti';
   await plugin.show(
     id: 0,
+    title: 'Stashly',
+    body: body,
+    notificationDetails: details,
+  );
+}
+
+Future<void> _showDeadLinksNotification(List<SavedItem> newlyDead) async {
+  final plugin = FlutterLocalNotificationsPlugin();
+  const androidInit = AndroidInitializationSettings('ic_stat_notify');
+  await plugin.initialize(settings: const InitializationSettings(android: androidInit));
+  const details = NotificationDetails(
+    android: AndroidNotificationDetails(
+      'dead_link_channel',
+      'Controllo link',
+      channelDescription: 'Avviso quando alcuni link salvati non sembrano più raggiungibili',
+      importance: Importance.defaultImportance,
+      priority: Priority.defaultPriority,
+    ),
+  );
+  final count = newlyDead.length;
+  final body = count == 1
+      ? '1 salvato potrebbe non essere più disponibile'
+      : '$count salvati potrebbero non essere più disponibili';
+  await plugin.show(
+    id: 1,
     title: 'Stashly',
     body: body,
     notificationDetails: details,

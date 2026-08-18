@@ -7,6 +7,7 @@ import 'package:workmanager/workmanager.dart';
 import 'firebase_options.dart';
 import 'screens/home_screen.dart';
 import 'services/firestore_service.dart';
+import 'services/link_check_service.dart';
 import 'services/notification_service.dart';
 import 'services/theme_service.dart';
 
@@ -20,6 +21,7 @@ void main() async {
   await ThemeService.instance.load();
   await Workmanager().initialize(callbackDispatcher);
   await NotificationService.instance.load();
+  await LinkCheckService.instance.load();
   runApp(const StashlyApp());
 }
 

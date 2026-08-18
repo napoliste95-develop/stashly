@@ -82,6 +82,8 @@ class BackupService {
           note: oldItem.note,
           createdAt: oldItem.createdAt,
           seenAt: oldItem.seenAt,
+          linkStatus: oldItem.linkStatus,
+          lastCheckedAt: oldItem.lastCheckedAt,
         ),
       );
     }

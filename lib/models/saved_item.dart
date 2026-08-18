@@ -62,6 +62,11 @@ String platformLabel(SocialPlatform platform) {
   }
 }
 
+/// Esito dell'ultimo controllo di raggiungibilità del link, basato solo sullo
+/// status HTTP: è un segnale "best effort", non una garanzia (molte
+/// piattaforme rispondono comunque 200 anche per contenuti rimossi).
+enum LinkStatus { unknown, alive, dead, unverifiable }
+
 class SavedItem {
   final String id;
   final String url;
@@ -71,6 +76,8 @@ class SavedItem {
   final String note;
   final DateTime createdAt;
   final DateTime? seenAt;
+  final LinkStatus linkStatus;
+  final DateTime? lastCheckedAt;
 
   SavedItem({
     required this.id,
@@ -81,6 +88,8 @@ class SavedItem {
     required this.note,
     required this.createdAt,
     this.seenAt,
+    this.linkStatus = LinkStatus.unknown,
+    this.lastCheckedAt,
   });
 
   factory SavedItem.fromFirestore(String id, Map<String, dynamic> data) {
@@ -96,6 +105,11 @@ class SavedItem {
       note: data['note'] as String? ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       seenAt: (data['seenAt'] as Timestamp?)?.toDate(),
+      linkStatus: LinkStatus.values.firstWhere(
+        (s) => s.name == (data['linkStatus'] as String? ?? 'unknown'),
+        orElse: () => LinkStatus.unknown,
+      ),
+      lastCheckedAt: (data['lastCheckedAt'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -108,6 +122,8 @@ class SavedItem {
       'note': note,
       'createdAt': Timestamp.fromDate(createdAt),
       'seenAt': seenAt == null ? null : Timestamp.fromDate(seenAt!),
+      'linkStatus': linkStatus.name,
+      'lastCheckedAt': lastCheckedAt == null ? null : Timestamp.fromDate(lastCheckedAt!),
     };
   }
 
@@ -124,6 +140,13 @@ class SavedItem {
       note: json['note'] as String? ?? '',
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
       seenAt: json['seenAt'] == null ? null : DateTime.tryParse(json['seenAt'] as String),
+      linkStatus: LinkStatus.values.firstWhere(
+        (s) => s.name == (json['linkStatus'] as String? ?? 'unknown'),
+        orElse: () => LinkStatus.unknown,
+      ),
+      lastCheckedAt: json['lastCheckedAt'] == null
+          ? null
+          : DateTime.tryParse(json['lastCheckedAt'] as String),
     );
   }
 
@@ -136,6 +159,8 @@ class SavedItem {
       'note': note,
       'createdAt': createdAt.toIso8601String(),
       'seenAt': seenAt?.toIso8601String(),
+      'linkStatus': linkStatus.name,
+      'lastCheckedAt': lastCheckedAt?.toIso8601String(),
     };
   }
 }

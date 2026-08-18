@@ -1,6 +1,6 @@
 {
-  "versionCode": 23,
-  "version": "0.6.8",
-  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.6.8/stashly-v0.6.8.apk",
-  "changelog": "Indicatore visivo \"visto/non visto\" sulle card della home (pallino di accento sui salvati mai aperti, testo attenuato su quelli già visti). Empty state della home più invitante quando la libreria è vuota, con pulsante diretto per aggiungere il primo salvato. Pulsante mostra/nascondi password nel form di accesso/registrazione. Fix: risolto un crash che poteva verificarsi tornando alla home subito dopo essere usciti e rientrati nell'account (in particolare con \"Continua con Google\" su un account già collegato)."
+  "versionCode": 24,
+  "version": "0.6.82",
+  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.6.82/stashly-v0.6.82.apk",
+  "changelog": "Nuovo controllo dei link salvati: rileva (in base al solo status HTTP, quindi un segnale best-effort, non una garanzia) i link probabilmente non più disponibili. Verifica manuale per singolo salvato o per tutta la libreria da Impostazioni → Controllo link, più un controllo automatico settimanale opzionale (disattivato di default) con avviso solo se trova nuovi link morti. Badge visivo sulla card per i salvati segnalati."
 }

@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/category.dart';
 import '../models/saved_item.dart';
 import '../services/firestore_service.dart';
+import '../services/link_check_service.dart';
 import 'item_sheet_helper.dart';
 
 FaIconData platformIcon(SocialPlatform platform) {
@@ -72,6 +73,22 @@ Future<void> openAndMarkSeen(SavedItem item) async {
   }
 }
 
+/// Verifica manualmente un singolo link e mostra l'esito in uno SnackBar.
+/// Condivisa tra [ItemCard] e [ItemGridTile]. Cattura il [ScaffoldMessenger]
+/// prima dell'`await` perché i due widget sono `StatelessWidget` (nessun
+/// `mounted` da controllare dopo il gap asincrono).
+Future<void> checkLinkAndNotify(BuildContext context, SavedItem item) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final status = await LinkCheckService.instance.checkSingleItemAndPersist(item);
+  final message = switch (status) {
+    LinkStatus.dead => 'Il link non sembra più raggiungibile.',
+    LinkStatus.alive => 'Il link risulta raggiungibile.',
+    LinkStatus.unverifiable => 'Non è stato possibile verificare il link, riprova più tardi.',
+    LinkStatus.unknown => 'Verifica non riuscita.',
+  };
+  messenger.showSnackBar(SnackBar(content: Text(message)));
+}
+
 class ItemCard extends StatelessWidget {
   final SavedItem item;
   final Map<String, Category> categoryById;
@@ -129,6 +146,24 @@ class ItemCard extends StatelessWidget {
               '${platformLabel(item.platform)} · '
               '${DateFormat('dd/MM/yyyy').format(item.createdAt)}',
             ),
+            if (item.linkStatus == LinkStatus.dead)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Tooltip(
+                  message: 'Possibile link non più disponibile',
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.link_off, size: 14, color: Theme.of(context).colorScheme.error),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Forse non più disponibile',
+                        style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.error),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             if (categories.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
@@ -153,17 +188,20 @@ class ItemCard extends StatelessWidget {
               ),
           ],
         ),
-        isThreeLine: categories.isNotEmpty,
+        isThreeLine: categories.isNotEmpty || item.linkStatus == LinkStatus.dead,
         trailing: PopupMenuButton<String>(
           onSelected: (value) {
             if (value == 'edit') {
               openItemSheet(context, existingItem: item);
             } else if (value == 'delete') {
               FirestoreService().deleteItem(item.id);
+            } else if (value == 'check_link') {
+              checkLinkAndNotify(context, item);
             }
           },
           itemBuilder: (context) => const [
             PopupMenuItem(value: 'edit', child: Text('Modifica')),
+            PopupMenuItem(value: 'check_link', child: Text('Verifica link')),
             PopupMenuItem(value: 'delete', child: Text('Elimina')),
           ],
         ),
@@ -222,6 +260,24 @@ class ItemGridTile extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (item.linkStatus == LinkStatus.dead)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+                    child: Tooltip(
+                      message: 'Possibile link non più disponibile',
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.link_off, size: 12, color: Theme.of(context).colorScheme.error),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Forse non disponibile',
+                            style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.error),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 if (categories.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
@@ -280,10 +336,13 @@ class ItemGridTile extends StatelessWidget {
                     openItemSheet(context, existingItem: item);
                   } else if (value == 'delete') {
                     FirestoreService().deleteItem(item.id);
+                  } else if (value == 'check_link') {
+                    checkLinkAndNotify(context, item);
                   }
                 },
                 itemBuilder: (context) => const [
                   PopupMenuItem(value: 'edit', child: Text('Modifica')),
+                  PopupMenuItem(value: 'check_link', child: Text('Verifica link')),
                   PopupMenuItem(value: 'delete', child: Text('Elimina')),
                 ],
               ),

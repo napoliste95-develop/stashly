@@ -9,6 +9,7 @@ import '../services/update_service.dart';
 import '../widgets/update_dialog.dart';
 import 'appearance_settings_screen.dart';
 import 'feedback_screen.dart';
+import 'link_check_settings_screen.dart';
 import 'reminder_settings_screen.dart';
 import 'version_screen.dart';
 
@@ -130,6 +131,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ReminderSettingsScreen()),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.link_off),
+            title: const Text('Controllo link'),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const LinkCheckSettingsScreen()),
             ),
           ),
           const Divider(),
