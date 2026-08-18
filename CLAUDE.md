@@ -109,7 +109,8 @@ firebase.json             # Config Hosting (public/) + Firestore rules/indexes
 - Tracking "visto/non visto" per ogni salvato (si aggiorna al tap), usato dal promemoria settimanale
 
 **Account e sincronizzazione**
-- Accesso anonimo di default; upgrade a email/password in qualsiasi momento senza perdere i dati, sincronizzazione realtime via Firestore
+- Accesso anonimo di default; upgrade a email/password o Google in qualsiasi momento senza perdere i dati, sincronizzazione realtime via Firestore
+- "Continua con Google" su una sessione anonima prova prima a collegare l'account Google alla sessione corrente (`linkWithCredential`); se quell'account Google è già collegato a un altro utente Stashly (`FirebaseAuthException` con codice `credential-already-in-use`), l'app esegue automaticamente il login su quell'account esistente (`signInWithCredential`), avvisando prima l'utente se la sessione anonima corrente ha già dei salvati che altrimenti resterebbero "orfani" (suggerendo di esportarli da Impostazioni → Esporta dati)
 
 **Export/Import dati**
 - Da Impostazioni → "Esporta i tuoi dati": genera un JSON con tutti gli item e le categorie (date in ISO 8601), lo scrive in un file temporaneo e apre il foglio di condivisione di sistema (`share_plus`)

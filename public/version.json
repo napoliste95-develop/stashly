@@ -1,6 +1,6 @@
 {
-  "versionCode": 21,
-  "version": "0.6.7",
-  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.6.7/stashly-v0.6.7.apk",
-  "changelog": "Esportazione e importazione della libreria dei salvati in formato JSON (Impostazioni → Dati): utile come backup manuale e per trasferire i dati tra dispositivi/account. Predisposto anche un avviso nel dialog di aggiornamento per future release che richiederanno la reinstallazione manuale dell'app (non ancora attivo in questa versione)."
+  "versionCode": 22,
+  "version": "0.6.7b",
+  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.6.7b/stashly-v0.6.7b.apk",
+  "changelog": "Fix: l'accesso con un account Google già collegato a un altro account Stashly ora funziona correttamente. Prima, se si toccava \"Continua con Google\" con un account già associato a un altro utente Stashly, l'app mostrava un errore tecnico in inglese e sembrava impossibile accedere se non con email e password. Ora l'app riconosce il caso ed effettua l'accesso diretto a quell'account (avvisando prima se la sessione anonima corrente ha salvati che altrimenti resterebbero non più visibili)."
 }

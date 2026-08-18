@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../services/firestore_service.dart';
+
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
 
@@ -114,11 +116,54 @@ class _AccountScreenState extends State<AccountScreen> {
     final credential = GoogleAuthProvider.credential(idToken: googleAuth.idToken);
     final user = FirebaseAuth.instance.currentUser;
     if (user != null && user.isAnonymous) {
-      // Collega l'account anonimo: i salvati esistenti restano tutti.
-      await user.linkWithCredential(credential);
+      try {
+        // Collega l'account anonimo: i salvati esistenti restano tutti.
+        await user.linkWithCredential(credential);
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'credential-already-in-use') {
+          // Questo account Google è già collegato a un altro utente Stashly:
+          // non è un collegamento, è un login su quell'account esistente.
+          await _switchToExistingGoogleAccount(credential);
+          return;
+        }
+        rethrow;
+      }
     } else {
       await FirebaseAuth.instance.signInWithCredential(credential);
     }
+    setState(() {});
+  }
+
+  Future<void> _switchToExistingGoogleAccount(AuthCredential credential) async {
+    final items = await FirestoreService().getAllItemsOnce();
+    if (items.isNotEmpty) {
+      if (!mounted) return;
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Account Google già collegato altrove'),
+          content: Text(
+            'Questo account Google è già collegato a un altro account Stashly. '
+            'Se continui accederai a quell\'account: i salvati di questa sessione '
+            '(${items.length}) non saranno più visibili, a meno che tu non li '
+            'esporti ora da Impostazioni → Esporta dati e li importi dopo aver '
+            'effettuato l\'accesso.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Annulla'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Accedi comunque'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+    }
+    await FirebaseAuth.instance.signInWithCredential(credential);
     setState(() {});
   }
 
