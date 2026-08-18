@@ -1,6 +1,6 @@
 # Stashly — Contesto di progetto
 
-Documento di riepilogo per riprendere il lavoro su Stashly in una nuova conversazione senza dover rispiegare tutto da capo. Ultimo aggiornamento: versione app **0.6.7** (build 21).
+Documento di riepilogo per riprendere il lavoro su Stashly in una nuova conversazione senza dover rispiegare tutto da capo. Ultimo aggiornamento: versione app **0.6.7b** (build 22).
 
 ## Modi di operare concordati con l'utente
 
