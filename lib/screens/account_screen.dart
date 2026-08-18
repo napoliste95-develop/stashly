@@ -16,6 +16,7 @@ class _AccountScreenState extends State<AccountScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _loading = false;
+  bool _obscurePassword = true;
   String? _error;
 
   @override
@@ -237,10 +238,22 @@ class _AccountScreenState extends State<AccountScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
+                obscureText: _obscurePassword,
+                decoration: InputDecoration(
                   labelText: 'Password',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                    tooltip: _obscurePassword
+                        ? 'Mostra password'
+                        : 'Nascondi password',
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
+                  ),
                 ),
               ),
               if (_error != null) ...[

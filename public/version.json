@@ -1,6 +1,6 @@
 {
-  "versionCode": 22,
-  "version": "0.6.7b",
-  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.6.7b/stashly-v0.6.7b.apk",
-  "changelog": "Fix: l'accesso con un account Google già collegato a un altro account Stashly ora funziona correttamente. Prima, se si toccava \"Continua con Google\" con un account già associato a un altro utente Stashly, l'app mostrava un errore tecnico in inglese e sembrava impossibile accedere se non con email e password. Ora l'app riconosce il caso ed effettua l'accesso diretto a quell'account (avvisando prima se la sessione anonima corrente ha salvati che altrimenti resterebbero non più visibili)."
+  "versionCode": 23,
+  "version": "0.6.8",
+  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.6.8/stashly-v0.6.8.apk",
+  "changelog": "Indicatore visivo \"visto/non visto\" sulle card della home (pallino di accento sui salvati mai aperti, testo attenuato su quelli già visti). Empty state della home più invitante quando la libreria è vuota, con pulsante diretto per aggiungere il primo salvato. Pulsante mostra/nascondi password nel form di accesso/registrazione. Fix: risolto un crash che poteva verificarsi tornando alla home subito dopo essere usciti e rientrati nell'account (in particolare con \"Continua con Google\" su un account già collegato)."
 }

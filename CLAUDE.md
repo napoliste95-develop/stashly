@@ -1,6 +1,6 @@
 # Stashly — Contesto di progetto
 
-Documento di riepilogo per riprendere il lavoro su Stashly in una nuova conversazione senza dover rispiegare tutto da capo. Ultimo aggiornamento: versione app **0.6.7b** (build 22).
+Documento di riepilogo per riprendere il lavoro su Stashly in una nuova conversazione senza dover rispiegare tutto da capo. Ultimo aggiornamento: versione app **0.6.8** (build 23).
 
 ## Modi di operare concordati con l'utente
 
@@ -106,11 +106,14 @@ firebase.json             # Config Hosting (public/) + Firestore rules/indexes
 - Aggiunta manuale (link + nome + nota + categorie) o condivisione diretta da altre app, con riconoscimento automatico della piattaforma dall'URL
 - Categorie persistenti multi-selezione, colore personalizzabile da tavolozza fissa (sempre univoco tra categorie), gestibili in una schermata dedicata con card colorate e swipe per rinominare/eliminare (conferma richiesta per l'eliminazione)
 - Home con ricerca testuale, ordinamento (data/nome/piattaforma) e scelta tra vista a lista e vista a griglia (preferenza ricordata)
-- Tracking "visto/non visto" per ogni salvato (si aggiorna al tap), usato dal promemoria settimanale
+- Tracking "visto/non visto" per ogni salvato (si aggiorna al tap), usato dal promemoria settimanale; visibile anche in home come indicatore visivo sulla card (pallino di accento sugli item mai aperti, testo del titolo attenuato su quelli già visti — sia in vista lista che griglia, `lib/widgets/item_card.dart`)
+- Empty state della home (libreria vuota) con icona, testo breve e pulsante diretto "Aggiungi il primo salvato" oltre al FAB (`lib/screens/home_screen.dart`)
 
 **Account e sincronizzazione**
 - Accesso anonimo di default; upgrade a email/password o Google in qualsiasi momento senza perdere i dati, sincronizzazione realtime via Firestore
+- Campo password del form di accesso/registrazione con pulsante mostra/nascondi (`lib/screens/account_screen.dart`)
 - "Continua con Google" su una sessione anonima prova prima a collegare l'account Google alla sessione corrente (`linkWithCredential`); se quell'account Google è già collegato a un altro utente Stashly (`FirebaseAuthException` con codice `credential-already-in-use`), l'app esegue automaticamente il login su quell'account esistente (`signInWithCredential`), avvisando prima l'utente se la sessione anonima corrente ha già dei salvati che altrimenti resterebbero "orfani" (suggerendo di esportarli da Impostazioni → Esporta dati)
+- **Fix**: uscendo (Esci) e rientrando (anche con "Continua con Google" sullo stesso account già collegato), la home poteva andare in crash ("Null check operator used on a null value"). Causa: `FirestoreService._uid` (`lib/services/firestore_service.dart:14`) forza `FirebaseAuth.instance.currentUser!.uid`, e `HomeScreen` ricreava gli stream Firestore ad ogni `build()`; se un rebuild capitava nella breve finestra in cui `currentUser` è transitoriamente `null` durante `signOut()`/`signInWithCredential()`, l'app andava in errore. Risolto avvolgendo il body di `HomeScreen` in uno `StreamBuilder<User?>` su `FirebaseAuth.instance.authStateChanges()` che mostra un loader finché l'utente non è di nuovo disponibile (`lib/screens/home_screen.dart`).
 
 **Export/Import dati**
 - Da Impostazioni → "Esporta i tuoi dati": genera un JSON con tutti gli item e le categorie (date in ISO 8601), lo scrive in un file temporaneo e apre il foglio di condivisione di sistema (`share_plus`)

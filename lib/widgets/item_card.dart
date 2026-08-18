@@ -96,10 +96,31 @@ class ItemCard extends StatelessWidget {
             size: 18,
           ),
         ),
-        title: Text(
-          item.title.isNotEmpty ? item.title : item.url,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
+        title: Row(
+          children: [
+            if (item.seenAt == null)
+              Container(
+                margin: const EdgeInsets.only(right: 6),
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            Expanded(
+              child: Text(
+                item.title.isNotEmpty ? item.title : item.url,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: item.seenAt != null
+                    ? TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      )
+                    : null,
+              ),
+            ),
+          ],
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,7 +214,12 @@ class ItemGridTile extends StatelessWidget {
                     item.title.isNotEmpty ? item.title : item.url,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: item.seenAt != null
+                          ? Theme.of(context).colorScheme.onSurfaceVariant
+                          : null,
+                    ),
                   ),
                 ),
                 if (categories.isNotEmpty)
@@ -230,6 +256,20 @@ class ItemGridTile extends StatelessWidget {
                   ),
               ],
             ),
+            if (item.seenAt == null)
+              Positioned(
+                top: 6,
+                left: 6,
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Theme.of(context).colorScheme.primary,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                ),
+              ),
             Positioned(
               top: 0,
               right: 0,

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -55,10 +56,12 @@ List<SavedItem> filterAndSortItems(
   final query = searchQuery.trim().toLowerCase();
   if (query.isNotEmpty) {
     result = result
-        .where((e) =>
-            e.title.toLowerCase().contains(query) ||
-            e.note.toLowerCase().contains(query) ||
-            e.url.toLowerCase().contains(query))
+        .where(
+          (e) =>
+              e.title.toLowerCase().contains(query) ||
+              e.note.toLowerCase().contains(query) ||
+              e.url.toLowerCase().contains(query),
+        )
         .toList();
   }
 
@@ -71,14 +74,18 @@ List<SavedItem> filterAndSortItems(
       result.sort((a, b) => a.createdAt.compareTo(b.createdAt));
       break;
     case SortOption.nameAsc:
-      result.sort((a, b) => _displayName(a)
-          .toLowerCase()
-          .compareTo(_displayName(b).toLowerCase()));
+      result.sort(
+        (a, b) => _displayName(
+          a,
+        ).toLowerCase().compareTo(_displayName(b).toLowerCase()),
+      );
       break;
     case SortOption.nameDesc:
-      result.sort((a, b) => _displayName(b)
-          .toLowerCase()
-          .compareTo(_displayName(a).toLowerCase()));
+      result.sort(
+        (a, b) => _displayName(
+          b,
+        ).toLowerCase().compareTo(_displayName(a).toLowerCase()),
+      );
       break;
     case SortOption.platform:
       result.sort((a, b) {
@@ -127,7 +134,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _toggleViewMode() async {
-    final newMode = _viewMode == HomeViewMode.list ? HomeViewMode.grid : HomeViewMode.list;
+    final newMode = _viewMode == HomeViewMode.list
+        ? HomeViewMode.grid
+        : HomeViewMode.list;
     setState(() => _viewMode = newMode);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_viewModePrefsKey, newMode.name);
@@ -268,7 +277,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ? Icons.grid_view_outlined
                   : Icons.view_list_outlined,
             ),
-            tooltip: _viewMode == HomeViewMode.list ? 'Vista a griglia' : 'Vista a lista',
+            tooltip: _viewMode == HomeViewMode.list
+                ? 'Vista a griglia'
+                : 'Vista a lista',
             onPressed: _toggleViewMode,
           ),
           PopupMenuButton<SortOption>(
@@ -288,82 +299,124 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       drawer: _buildDrawer(),
-      body: StreamBuilder<List<Category>>(
-        stream: _service.watchCategories(),
-        builder: (context, categorySnapshot) {
-          final categories = categorySnapshot.data ?? [];
-          final categoryById = {for (final c in categories) c.id: c};
+      body: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, authSnapshot) {
+          if (authSnapshot.data == null) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          return StreamBuilder<List<Category>>(
+            stream: _service.watchCategories(),
+            builder: (context, categorySnapshot) {
+              final categories = categorySnapshot.data ?? [];
+              final categoryById = {for (final c in categories) c.id: c};
 
-          return StreamBuilder<List<SavedItem>>(
-            stream: _service.watchItems(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              final items = snapshot.data ?? [];
-              if (items.isEmpty) {
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Text(
-                      'Ancora nessun salvato.\nUsa il pulsante + per aggiungere '
-                      'il tuo primo link, oppure condividi direttamente da '
-                      'Instagram, TikTok o Pinterest.',
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                );
-              }
-
-              final filtered = filterAndSortItems(
-                items,
-                categoryId: _selectedCategoryId,
-                searchQuery: _searchQuery,
-                sortOption: _sortOption,
-              );
-
-              return Column(
-                children: [
-                  SizedBox(
-                    height: 48,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: ChoiceChip(
-                            label: const Text('Tutti'),
-                            selected: _selectedCategoryId == null,
-                            onSelected: (_) =>
-                                setState(() => _selectedCategoryId = null),
-                          ),
-                        ),
-                        ...categories.map(
-                          (c) => Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: ChoiceChip(
-                              label: Text(c.name),
-                              avatar: CircleAvatar(
-                                backgroundColor: c.color,
-                                radius: 6,
-                              ),
-                              selected: _selectedCategoryId == c.id,
-                              onSelected: (_) =>
-                                  setState(() => _selectedCategoryId = c.id),
+              return StreamBuilder<List<SavedItem>>(
+                stream: _service.watchItems(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final items = snapshot.data ?? [];
+                  if (items.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.bookmark_add_outlined,
+                              size: 72,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: 0.6),
                             ),
-                          ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Il tuo primo salvato è a un tap di distanza.',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Oppure condividi un link direttamente dai tuoi social '
+                              'preferiti.',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                            const SizedBox(height: 20),
+                            FilledButton(
+                              onPressed: () => openItemSheet(context),
+                              child: const Text('Aggiungi il primo salvato'),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                  const Divider(height: 1),
-                  Expanded(
-                    child: filtered.isEmpty
-                        ? const Center(
-                            child: Text('Nessun salvato corrisponde ai filtri.'),
-                          )
-                        : _viewMode == HomeViewMode.list
+                      ),
+                    );
+                  }
+
+                  final filtered = filterAndSortItems(
+                    items,
+                    categoryId: _selectedCategoryId,
+                    searchQuery: _searchQuery,
+                    sortOption: _sortOption,
+                  );
+
+                  return Column(
+                    children: [
+                      SizedBox(
+                        height: 48,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
+                              child: ChoiceChip(
+                                label: const Text('Tutti'),
+                                selected: _selectedCategoryId == null,
+                                onSelected: (_) =>
+                                    setState(() => _selectedCategoryId = null),
+                              ),
+                            ),
+                            ...categories.map(
+                              (c) => Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                child: ChoiceChip(
+                                  label: Text(c.name),
+                                  avatar: CircleAvatar(
+                                    backgroundColor: c.color,
+                                    radius: 6,
+                                  ),
+                                  selected: _selectedCategoryId == c.id,
+                                  onSelected: (_) => setState(
+                                    () => _selectedCategoryId = c.id,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      Expanded(
+                        child: filtered.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  'Nessun salvato corrisponde ai filtri.',
+                                ),
+                              )
+                            : _viewMode == HomeViewMode.list
                             ? ListView.builder(
                                 itemCount: filtered.length,
                                 itemBuilder: (context, index) => ItemCard(
@@ -375,19 +428,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                 padding: const EdgeInsets.all(8),
                                 gridDelegate:
                                     const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  mainAxisSpacing: 8,
-                                  crossAxisSpacing: 8,
-                                  childAspectRatio: 0.85,
-                                ),
+                                      crossAxisCount: 2,
+                                      mainAxisSpacing: 8,
+                                      crossAxisSpacing: 8,
+                                      childAspectRatio: 0.85,
+                                    ),
                                 itemCount: filtered.length,
                                 itemBuilder: (context, index) => ItemGridTile(
                                   item: filtered[index],
                                   categoryById: categoryById,
                                 ),
                               ),
-                  ),
-                ],
+                      ),
+                    ],
+                  );
+                },
               );
             },
           );
