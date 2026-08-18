@@ -34,4 +34,17 @@ class Category {
         'name': name,
         'color': color.toARGB32(),
       };
+
+  factory Category.fromJson(String id, Map<String, dynamic> json) {
+    return Category(
+      id: id,
+      name: json['name'] as String? ?? '',
+      color: Color(json['color'] as int? ?? categoryColorPalette.first.toARGB32()),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'color': color.toARGB32(),
+      };
 }

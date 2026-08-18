@@ -154,6 +154,28 @@ class FirestoreService {
     await _itemsRef.doc(id).delete();
   }
 
+  /// Lettura singola (non stream) di tutti i salvati dell'utente, usata
+  /// dall'export dati.
+  Future<List<SavedItem>> getAllItemsOnce() async {
+    final snapshot = await _itemsRef.get();
+    return snapshot.docs.map((doc) => SavedItem.fromFirestore(doc.id, doc.data())).toList();
+  }
+
+  /// Scrive in blocco dei salvati importati da un backup, preservando
+  /// `createdAt`/`seenAt` originali (a differenza di [addItem]). Usa lo
+  /// stesso pattern a blocchi di 500 di [migrateMarkExistingItemsAsSeenIfNeeded]
+  /// per rispettare il limite di Firestore sulle batch write.
+  Future<void> restoreItems(List<SavedItem> items) async {
+    for (var i = 0; i < items.length; i += 500) {
+      final chunk = items.skip(i).take(500);
+      final batch = _db.batch();
+      for (final item in chunk) {
+        batch.set(_itemsRef.doc(), item.toFirestore());
+      }
+      await batch.commit();
+    }
+  }
+
   // ---------------- Categories ----------------
 
   Stream<List<Category>> watchCategories() {
@@ -162,6 +184,13 @@ class FirestoreService {
               .map((doc) => Category.fromFirestore(doc.id, doc.data()))
               .toList(),
         );
+  }
+
+  /// Lettura singola (non stream) di tutte le categorie dell'utente, usata
+  /// dall'export dati.
+  Future<List<Category>> getAllCategoriesOnce() async {
+    final snapshot = await _categoriesRef.get();
+    return snapshot.docs.map((doc) => Category.fromFirestore(doc.id, doc.data())).toList();
   }
 
   Future<Category> createCategory(String name) async {

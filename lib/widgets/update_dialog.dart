@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../screens/settings_screen.dart';
 import '../services/apk_installer_service.dart';
 import '../services/update_service.dart';
+
+const _githubReleasesUrl =
+    'https://github.com/napoliste95-develop/stashly/releases';
 
 Future<void> showUpdateDialog(BuildContext context, UpdateInfo info) {
   return showDialog(
@@ -59,6 +64,35 @@ class _UpdateDialogState extends State<_UpdateDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (_stage == _Stage.prompt) ...[
+              if (widget.info.requiresManualReinstall) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.errorContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: Theme.of(context).colorScheme.onErrorContainer,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          widget.info.manualReinstallMessage ??
+                              'Questo aggiornamento richiede la disinstallazione manuale dell\'app.',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onErrorContainer,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
               Text(
                 widget.info.changelog.isEmpty
                     ? 'Sono disponibili miglioramenti e correzioni.'
@@ -79,16 +113,40 @@ class _UpdateDialogState extends State<_UpdateDialog> {
         ),
       ),
       actions: _stage == _Stage.prompt
-          ? [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Più tardi'),
-              ),
-              FilledButton(
-                onPressed: _startUpdate,
-                child: const Text('Scarica e installa'),
-              ),
-            ]
+          ? widget.info.requiresManualReinstall
+              ? [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Più tardi'),
+                  ),
+                  TextButton(
+                    onPressed: () => launchUrl(
+                      Uri.parse(_githubReleasesUrl),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                    child: const Text('Apri le Release su GitHub'),
+                  ),
+                  FilledButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                      );
+                    },
+                    child: const Text('Vai a Esporta dati'),
+                  ),
+                ]
+              : [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Più tardi'),
+                  ),
+                  FilledButton(
+                    onPressed: _startUpdate,
+                    child: const Text('Scarica e installa'),
+                  ),
+                ]
           : _stage == _Stage.error
               ? [
                   TextButton(

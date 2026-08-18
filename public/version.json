@@ -1,6 +1,6 @@
 {
-  "versionCode": 20,
-  "version": "0.6.6",
-  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.6.6/stashly-v0.6.6.apk",
-  "changelog": "Aggiunta la schermata Statistiche, con distribuzione dei salvati per piattaforma e categoria, percentuale di mai aperti e categoria più/meno usata. Risolto un bug per cui una categoria creata al volo durante il salvataggio non appariva subito nell'elenco."
+  "versionCode": 21,
+  "version": "0.6.7",
+  "apkUrl": "https://github.com/napoliste95-develop/stashly/releases/download/v0.6.7/stashly-v0.6.7.apk",
+  "changelog": "Esportazione e importazione della libreria dei salvati in formato JSON (Impostazioni → Dati): utile come backup manuale e per trasferire i dati tra dispositivi/account. Predisposto anche un avviso nel dialog di aggiornamento per future release che richiederanno la reinstallazione manuale dell'app (non ancora attivo in questa versione)."
 }

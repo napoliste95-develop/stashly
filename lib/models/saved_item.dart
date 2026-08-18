@@ -110,4 +110,32 @@ class SavedItem {
       'seenAt': seenAt == null ? null : Timestamp.fromDate(seenAt!),
     };
   }
+
+  factory SavedItem.fromJson(String id, Map<String, dynamic> json) {
+    return SavedItem(
+      id: id,
+      url: json['url'] as String? ?? '',
+      platform: SocialPlatform.values.firstWhere(
+        (p) => p.name == (json['platform'] as String? ?? 'other'),
+        orElse: () => SocialPlatform.other,
+      ),
+      title: json['title'] as String? ?? '',
+      categoryIds: (json['categoryIds'] as List?)?.cast<String>() ?? [],
+      note: json['note'] as String? ?? '',
+      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
+      seenAt: json['seenAt'] == null ? null : DateTime.tryParse(json['seenAt'] as String),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'url': url,
+      'platform': platform.name,
+      'title': title,
+      'categoryIds': categoryIds,
+      'note': note,
+      'createdAt': createdAt.toIso8601String(),
+      'seenAt': seenAt?.toIso8601String(),
+    };
+  }
 }

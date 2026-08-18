@@ -12,11 +12,20 @@ class UpdateInfo {
   final String apkUrl;
   final String changelog;
 
+  /// Se true, questa release non può essere installata automaticamente
+  /// (es. cambio della chiave di firma dell'APK) e il dialog di
+  /// aggiornamento deve mostrare istruzioni manuali invece del pulsante
+  /// "Scarica e installa".
+  final bool requiresManualReinstall;
+  final String? manualReinstallMessage;
+
   UpdateInfo({
     required this.versionCode,
     required this.version,
     required this.apkUrl,
     required this.changelog,
+    this.requiresManualReinstall = false,
+    this.manualReinstallMessage,
   });
 }
 
@@ -43,6 +52,8 @@ class UpdateService {
         version: data['version'] as String,
         apkUrl: data['apkUrl'] as String,
         changelog: data['changelog'] as String? ?? '',
+        requiresManualReinstall: data['requiresManualReinstall'] as bool? ?? false,
+        manualReinstallMessage: data['manualReinstallMessage'] as String?,
       );
     } catch (e) {
       return null;

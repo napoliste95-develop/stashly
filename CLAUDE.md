@@ -62,11 +62,12 @@ lib/
     saved_item.dart        # Modello SavedItem + enum SocialPlatform (9 piattaforme + 'altro')
     category.dart          # Modello Category + tavolozza colori fissa
   services/
-    firestore_service.dart # CRUD items/categorie, migrazione dati legacy, feedback
+    firestore_service.dart # CRUD items/categorie, migrazione dati legacy, feedback, lettura/scrittura in blocco per backup
+    backup_service.dart    # Export/import dell'intera libreria in JSON (remapping categorie per nome in fase di import)
     error_log_service.dart # Log errori locale persistito (SharedPreferences)
     theme_service.dart     # Tema chiaro/scuro/sistema persistito
     share_intent_service.dart # Riceve condivisioni da altre app (Android SEND intent)
-    update_service.dart    # Controlla version.json e confronta con versione installata
+    update_service.dart    # Controlla version.json, confronta con versione installata, gestisce il flag di reinstallo manuale
     apk_installer_service.dart # Scarica l'APK e avvia l'installer di sistema
     notification_service.dart  # Promemoria settimanale locale (workmanager + flutter_local_notifications)
   screens/
@@ -74,7 +75,7 @@ lib/
     account_screen.dart    # Login/registrazione, upgrade da anonimo
     category_management_screen.dart # Card colorate, swipe per rinominare/eliminare
     statistics_screen.dart # Grafici a torta (fl_chart): distribuzione per piattaforma/categoria, % mai aperti, categoria più/meno usata
-    settings_screen.dart   # Tema, promemoria, controlla aggiornamenti, versione, log errori, feedback
+    settings_screen.dart   # Tema, promemoria, export/import dati, controlla aggiornamenti, versione, log errori, feedback
     feedback_screen.dart   # Form segnalazione bug / proposta funzionalità
     error_log_screen.dart
     version_screen.dart
@@ -82,7 +83,7 @@ lib/
     item_card.dart         # ItemCard (lista) + ItemGridTile (griglia), icone brand reali per piattaforma
     add_item_sheet.dart    # Foglio aggiunta/modifica (multi-categoria, nome, nota)
     item_sheet_helper.dart # Helper condiviso per aprire il foglio con le categorie aggiornate
-    update_dialog.dart     # Dialog di aggiornamento con progress bar download+installazione
+    update_dialog.dart     # Dialog di aggiornamento con progress bar download+installazione; se requiresManualReinstall è true mostra un banner di avviso al posto del pulsante "Scarica e installa"
     welcome_dialog.dart    # Popup di benvenuto al primo avvio (con "non mostrare più")
 android/
   app/src/main/AndroidManifest.xml
@@ -110,12 +111,18 @@ firebase.json             # Config Hosting (public/) + Firestore rules/indexes
 **Account e sincronizzazione**
 - Accesso anonimo di default; upgrade a email/password in qualsiasi momento senza perdere i dati, sincronizzazione realtime via Firestore
 
+**Export/Import dati**
+- Da Impostazioni → "Esporta i tuoi dati": genera un JSON con tutti gli item e le categorie (date in ISO 8601), lo scrive in un file temporaneo e apre il foglio di condivisione di sistema (`share_plus`)
+- Da Impostazioni → "Importa dati": selezione file `.json` (`file_picker`), conferma esplicita, poi import sempre in modalità "unione" (nessun controllo duplicati) — le categorie vengono rimappate per nome con `getOrCreateCategoryByName` (i colori originali **non** sono preservati, solo il nome), gli item mantengono `createdAt`/`seenAt` originali tramite `FirestoreService.restoreItems` (scrittura batch a blocchi di 500)
+- Testato end-to-end sul dispositivo di debug: export → disinstallazione → reinstallazione → import, dati ripristinati correttamente
+
 **Notifiche**
 - Promemoria settimanale locale (no backend) dei salvati mai aperti, attivo di default, configurabile/disattivabile da Impostazioni (giorno/ora), saltato se il conteggio è zero
 - **Rischio noto**: la consegna non è garantita al minuto (Doze mode, risparmio energetico OEM aggressivo) — segnalato in UI
 
 **Aggiornamenti in-app**
 - L'app controlla `version.json` all'avvio e su richiesta, scarica l'APK e avvia l'installazione da sola (con retry automatico su reti instabili)
+- `version.json` supporta due campi opzionali (default `false`/`null`, quindi retrocompatibili): `requiresManualReinstall` e `manualReinstallMessage`. Quando `true` (pensato per la release che cambierà la chiave di firma dell'APK — vedi "Prossimi passi possibili"), il dialog di aggiornamento nasconde "Scarica e installa" (che fallirebbe silenziosamente per firma incompatibile) e mostra un banner di avviso con pulsanti "Vai a Esporta dati" e "Apri le Release su GitHub". Non ancora attivato in `public/version.json` — resta da impostare solo nella release che introduce la nuova chiave
 
 **Statistiche**
 - Schermata dedicata (raggiungibile dal drawer) con distribuzione dei salvati per piattaforma e per categoria (grafici a torta), percentuale di salvati mai aperti, categoria più/meno usata
@@ -151,3 +158,4 @@ firebase.json             # Config Hosting (public/) + Firestore rules/indexes
 - App per iOS (stesso codice Flutter, richiede Apple Developer Account e configurazione separata)
 - Eventuale tagging/categorizzazione automatica via AI
 - Rendere il README più curato con screenshot
+- Release con nuova chiave di firma dell'APK: ora che export/import e il meccanismo di avviso `requiresManualReinstall` sono implementati, resta solo da impostare il flag e il messaggio in `public/version.json` per quella specifica versione (vedi sezione "Aggiornamenti in-app")
