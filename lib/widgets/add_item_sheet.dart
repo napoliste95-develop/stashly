@@ -31,6 +31,7 @@ class _AddItemSheetState extends State<AddItemSheet> {
     text: widget.existingItem?.note ?? '',
   );
   final _newCategoryController = TextEditingController();
+  late final List<Category> _categories = List.of(widget.existingCategories);
   late final Set<String> _selectedCategoryIds =
       {...(widget.existingItem?.categoryIds ?? const [])};
   bool _saving = false;
@@ -49,9 +50,12 @@ class _AddItemSheetState extends State<AddItemSheet> {
   Future<void> _addNewCategory() async {
     final name = _newCategoryController.text.trim();
     if (name.isEmpty) return;
-    final id = await FirestoreService().getOrCreateCategoryByName(name);
+    final category = await FirestoreService().getOrCreateCategoryByName(name);
     setState(() {
-      _selectedCategoryIds.add(id);
+      if (!_categories.any((c) => c.id == category.id)) {
+        _categories.add(category);
+      }
+      _selectedCategoryIds.add(category.id);
       _newCategoryController.clear();
     });
   }
@@ -141,7 +145,7 @@ class _AddItemSheetState extends State<AddItemSheet> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: widget.existingCategories.map((c) {
+              children: _categories.map((c) {
                 final selected = _selectedCategoryIds.contains(c.id);
                 return FilterChip(
                   label: Text(c.name),

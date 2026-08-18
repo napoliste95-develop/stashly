@@ -62,9 +62,9 @@ class FirestoreService {
       return;
     }
     try {
-      final id = await getOrCreateCategoryByName(legacyName);
+      final category = await getOrCreateCategoryByName(legacyName);
       await doc.reference.update({
-        'categoryIds': [id],
+        'categoryIds': [category.id],
         'title': data['title'] ?? data['note'] ?? '',
       });
     } catch (e) {
@@ -164,13 +164,14 @@ class FirestoreService {
         );
   }
 
-  Future<String> createCategory(String name) async {
+  Future<Category> createCategory(String name) async {
+    final trimmed = name.trim();
     final chosenColor = await _pickUnusedColor();
     final doc = await _categoriesRef.add({
-      'name': name.trim(),
+      'name': trimmed,
       'color': chosenColor.toARGB32(),
     });
-    return doc.id;
+    return Category(id: doc.id, name: trimmed, color: chosenColor);
   }
 
   /// Sceglie un colore della tavolozza non ancora usato da nessuna
@@ -185,11 +186,13 @@ class FirestoreService {
     );
   }
 
-  /// Restituisce l'id della categoria con questo nome, creandola se manca.
-  Future<String> getOrCreateCategoryByName(String name) async {
+  /// Restituisce la categoria con questo nome, creandola se manca.
+  Future<Category> getOrCreateCategoryByName(String name) async {
     final trimmed = name.trim();
     final existing = await _categoriesRef.where('name', isEqualTo: trimmed).limit(1).get();
-    if (existing.docs.isNotEmpty) return existing.docs.first.id;
+    if (existing.docs.isNotEmpty) {
+      return Category.fromFirestore(existing.docs.first.id, existing.docs.first.data());
+    }
     return createCategory(trimmed);
   }
 

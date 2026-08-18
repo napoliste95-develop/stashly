@@ -14,6 +14,7 @@ import '../widgets/welcome_dialog.dart';
 import 'account_screen.dart';
 import 'category_management_screen.dart';
 import 'settings_screen.dart';
+import 'statistics_screen.dart';
 
 enum SortOption { newest, oldest, nameAsc, nameDesc, platform }
 
@@ -217,6 +218,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 MaterialPageRoute(
                   builder: (_) => const CategoryManagementScreen(),
                 ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.bar_chart_outlined),
+              title: const Text('Statistiche'),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const StatisticsScreen()),
               ),
             ),
             ListTile(

@@ -1,10 +1,11 @@
 # Stashly — Contesto di progetto
 
-Documento di riepilogo per riprendere il lavoro su Stashly in una nuova conversazione senza dover rispiegare tutto da capo. Ultimo aggiornamento: versione app **0.6.2** (build 16).
+Documento di riepilogo per riprendere il lavoro su Stashly in una nuova conversazione senza dover rispiegare tutto da capo. Ultimo aggiornamento: versione app **0.6.6** (build 20).
 
 ## Modi di operare concordati con l'utente
 
 - **Numerazione versione**: il numero mostrato (`X.Y.Z` in `pubspec.yaml`) non segue un incremento automatico deciso da Claude — chiedere sempre all'utente quale sarà la prossima versione prima di ogni build/release. Il build number interno (`+N`) invece cresce sempre in modo lineare e non va mai riusato né diminuito (è quello che l'aggiornamento in-app usa per confrontare le versioni, vedi `versionCode` in `version.json`).
+- **Aggiornamento continuo**: dopo ogni modifica o fix al codice, aggiornare questo file di conseguenza (struttura file, funzionalità, versione) nella stessa sessione/commit — non rimandare l'aggiornamento al momento della release.
 
 ## Cos'è Stashly
 
@@ -72,6 +73,7 @@ lib/
     home_screen.dart       # Schermata principale: lista/griglia + filtro categorie + ricerca/ordina + drawer
     account_screen.dart    # Login/registrazione, upgrade da anonimo
     category_management_screen.dart # Card colorate, swipe per rinominare/eliminare
+    statistics_screen.dart # Grafici a torta (fl_chart): distribuzione per piattaforma/categoria, % mai aperti, categoria più/meno usata
     settings_screen.dart   # Tema, promemoria, controlla aggiornamenti, versione, log errori, feedback
     feedback_screen.dart   # Form segnalazione bug / proposta funzionalità
     error_log_screen.dart
@@ -115,6 +117,9 @@ firebase.json             # Config Hosting (public/) + Firestore rules/indexes
 **Aggiornamenti in-app**
 - L'app controlla `version.json` all'avvio e su richiesta, scarica l'APK e avvia l'installazione da sola (con retry automatico su reti instabili)
 
+**Statistiche**
+- Schermata dedicata (raggiungibile dal drawer) con distribuzione dei salvati per piattaforma e per categoria (grafici a torta), percentuale di salvati mai aperti, categoria più/meno usata
+
 **Altro**
 - Tema chiaro/scuro/sistema, log errori locale consultabile, form di feedback (bug/proposte) su Firestore, popup di benvenuto al primo avvio
 - Icona app personalizzata (S rossa su nero); nome "Stashly" ancora provvisorio
@@ -140,7 +145,7 @@ firebase.json             # Config Hosting (public/) + Firestore rules/indexes
 - **Modalità sviluppatore Windows** necessaria per i symlink creati da Flutter durante la build dei plugin.
 - **Repository GitHub pubblico** deliberatamente (nessun segreto reale, solo config Firebase client-side già protetta dalle security rules) per permettere il download diretto degli APK dal telefono.
 
-## Prossimi passi possibili (non ancora fatti)
+## Prossimi passi possibili
 
 - Riconoscimento automatico di titolo/anteprima dai link condivisi (oEmbed)
 - App per iOS (stesso codice Flutter, richiede Apple Developer Account e configurazione separata)
